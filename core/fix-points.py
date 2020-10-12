@@ -3,7 +3,7 @@ from math import log as mlog
 from copy import copy
 
 
-def krit(lits: Object, rules: [Rule], par: FindParams) -> float:
+def krit(lits: Object, rules: List[Rule], par: FindParams) -> float:
     """
     Мера объекта
     :param lits: Объект
@@ -22,19 +22,19 @@ def krit(lits: Object, rules: [Rule], par: FindParams) -> float:
     return sum(map(lambda x: log_prob(x, par), sat)) - sum(map(lambda x: log_prob(x, par), fal))
 
 
-def krit_add(lits: Object, lit: Literal, rules: [Rule], par: FindParams) -> float:
+def krit_add(lits: Object, lit: Literal, rules: List[Rule], par: FindParams) -> float:
     sat = []
     fal = []
     for rule in rules:
-        if (lit == rule.consequent or ~ lit == rule.consequent) and lits.rule_applicability(rule):
-            if rule.consequent in lits:
+        if (lit == rule.concl or ~ lit == rule.concl) and lits.rule_applicability(rule):
+            if rule.concl in lits:
                 sat.append(rule)
-            if ~ rule.consequent in lits:
+            if ~ rule.concl in lits:
                 fal.append(rule)
     return sum(map(lambda x: log_prob(x, par), sat)) - sum(map(lambda x: log_prob(x, par), fal))
 
 
-def step_operator(lits: Object, rules: [Rule], par: FindParams) -> Object:
+def step_operator(lits: Object, rules: List[Rule], par: FindParams) -> Object:
     applicable_concls = copy(lits)
     for rule in rules:
         if lits.rule_applicability(rule):
@@ -53,27 +53,24 @@ def step_operator(lits: Object, rules: [Rule], par: FindParams) -> Object:
 def step_operator_explicable(lits: FixPoint, rules: [Rule], par: FindParams, k: int) -> FixPoint:
     def get_k_maxprob_rules(lit):  # Очень тупо, переделать
         return sorted(
-            [r for r in rules if r.consequent == lit and lits.rule_applicability(r)],
+            [r for r in rules if r.concl == lit and lits.rule_applicability(r)],
             key=lambda l: l.evaluate_prob(), reverse=True
         )[:k]
 
-    applicable_concls = copy(lits)
-    for rule in rules:
-        if lits.rule_applicability(rule):
-            applicable_concls = applicable_concls.add(rule.concl)
+    applicable_concls = get_applicable_conclusions(lits, rules)
 
     delta_add, lit_add = __delta_argmax_add(lits, applicable_concls, rules, par)
     delta_del, lit_del = __delta_argmax_del(lits, applicable_concls, rules, par)
 
     if krit(lits, rules, par) < krit(lits.add(lit_add), rules, par) and delta_add > delta_del and delta_add > 0:
-        return lits.step_add(lit_add, (lit_add, get_k_maxprob_rules(lit_add)))
+        return lits.step_add(lit_add, get_k_maxprob_rules(lit_add))
     elif krit(lits, rules, par) < krit(lits.delete(lit_del), rules, par) and delta_del >= delta_add and delta_del > 0:
-        return lits.step_del(lit_del, (lit_del, get_k_maxprob_rules(lit_del)))
+        return lits.step_del(lit_del, get_k_maxprob_rules(lit_del))
     else:
         return copy(lits)
 
 
-def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Rule], par: FindParams, k: int) -> {FixPoint}:
+def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Rule], par: FindParams, k: int) -> Set[FixPoint]:
     if k <= 0:
         raise ValueError("`k` must be positive")
     else:
@@ -95,11 +92,10 @@ def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Rule], par: FindParams, k
         return fix_points
 
 
-def fp(lits: [Object], rules: [Rule], par: FindParams) -> {Object}:
+def fp(lits: List[Object], rules: List[Rule], par: FindParams) -> Set[Object]:
     fix_points = set()
 
     for lit_now in lits:
-        lit_now = Object(lit_now)
         lit_now.completion()
 
         while True:
@@ -116,8 +112,8 @@ def fp(lits: [Object], rules: [Rule], par: FindParams) -> {Object}:
 
 # Далее идут чисто технические функции
 
-def __delta_argmax_add(lits: Object, applicable_concls: Iterable[Literal], rules: Iterable[Rule], par: FindParams) \
-        -> (float, Literal):
+def __delta_argmax_add(lits: Object, applicable_concls: List[Literal], rules: List[Rule], par: FindParams) \
+        -> Tuple[float, Literal]:
     # Функция ищет максимальное изменение критерия при добавлении предиката
     argmax = UndefinedLiteral()
     krit_lits, kritmax_delta, kritmax_arg, kr = .0, .0, .0, .0
@@ -133,7 +129,8 @@ def __delta_argmax_add(lits: Object, applicable_concls: Iterable[Literal], rules
     return kritmax_delta, argmax
 
 
-def __delta_argmax_del(lits: Object, applicable_concls: Iterable[Literal], rules: [Rule], par: FindParams) -> (float, Literal):
+def __delta_argmax_del(lits: Object, applicable_concls: List[Literal], rules: List[Rule], par: FindParams) \
+        -> Tuple[float, Literal]:
     krit_lits = krit(lits, rules, par)
     argmax = UndefinedLiteral()
     kritmax_delta, kritmax_arg, kr = .0, .0, .0
@@ -150,3 +147,11 @@ def __delta_argmax_del(lits: Object, applicable_concls: Iterable[Literal], rules
 
 def log_prob(r: Rule, par: FindParams) -> float:
     return -mlog(1 - r.evaluate(par)[0])
+
+
+def get_applicable_conclusions(lits: Union[FixPoint, Object], rules: List[Rule]) -> List[Literal]:
+    applicable_concls = copy(lits)
+    for rule in rules:
+        if lits.rule_applicability(rule):
+            applicable_concls = applicable_concls.add(rule.concl)
+    return applicable_concls

@@ -1,27 +1,25 @@
 from core.measures import *
 from core.structure import *
+from dataclasses import dataclass
 from os import mkdir
 
 
+@dataclass
 class GenParams:
-    def __init__(self, confidence_level: float, dirname: str, fully_depth: int, base_depth: int = 0):
-        self.dirname = dirname
-        self.base_depth = int(1/10 * fully_depth) if base_depth == 0 else base_depth  # TODO проверить гипотезу
-        self.fully_depth = fully_depth
-        self.confidence_level = confidence_level
+    base_depth: float
+    fully_depth: float
+    confidence_level: float = 0.05
+    dirname: str = "spl"
 
 
-def build_spl(find_interval: (int, int), find: FindParams, gen: GenParams) -> None:
+def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) -> None:
     """
     :param find_interval:
     Отрезок [a, b] ⊆ [0, `find.features_num`].
     Правила будут строиться для заключений, номера которых принимают значения из данного отрезка.
-    :param find:
-    Основные параметры обучающей выборки
-    :param gen:
-    Основные параметры генерации
-    :return:
-    None. Печатает закономерности в соответствующий файл в директории /`gen.dirname`
+    :param find: Основные параметры обучающей выборки
+    :param gen: Основные параметры генерации
+    :return: None. Печатает закономерности в соответствующий файл в директории /`gen.dirname`
     """
     if not (
             0 <= find_interval[0] < find.features_number
@@ -40,6 +38,15 @@ def build_spl(find_interval: (int, int), find: FindParams, gen: GenParams) -> No
         pass
         # TODO доделать
 
+    def check_subrules_prob(rule: Rule) -> bool:
+        # Проверяет вероятности подправил на единицу меньше
+        # Вообще говоря, нужно проверять ВСЕ подправила
+        for lit_del in rule.features:
+            subrule = Rule(rule.concl, [lit for lit in rule.features if lit != lit_del])
+            if subrule.prob(find) >= rule.prob(find) and \
+                subrule.p_value(find) <= rule.p_value(find):
+                return False
+        return True
 
-
-
+    def check_fisher(rule: Rule) -> bool:
+        pass

@@ -1,7 +1,8 @@
 from math import log, exp, lgamma
+from typing import List
 
 
-def fisher_exact(crosstab) -> float:
+def fisher_exact(crosstab: List[List[int]]) -> float:
     """
     Right tail fisher's exact test
     for 2x2 contingency table

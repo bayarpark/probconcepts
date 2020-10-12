@@ -1,8 +1,8 @@
 from core.fisher import *
-import core.structure as struct
+from typing import *
 
 
-def std_prob_measure(rule: struct.Rule, par: struct.FindParams) -> (float, float):  # TODO проверить глазами
+def std_prob_measure(rule: 'Rule', par: 'FindParams') -> Tuple[float, float]:
     top = 0
     bottom = 0
     cons_count = 0
@@ -33,13 +33,13 @@ def std_prob_measure(rule: struct.Rule, par: struct.FindParams) -> (float, float
         top += n
         bottom += d
 
-    absolute_prob = (cons_count + 1) / (par.obj_num + 2)  # absolute_prob д.б. < cond_prob
-    cond_prob = (top + 1) / (bottom + 2) if top != 0 and bottom != 0 else 0
+    absolute_prob = (cons_count + 1) / (par.dataset_size + 2)  # absolute_prob д.б. < cond_prob
+    cond_prob = (top + 1) / (bottom + 2) if top != 0 and bottom != 0 else 0.
 
     if absolute_prob >= cond_prob:  # Костыль -- если абсоютная в-ть >= условной, то возвращаем p_val = 1
-        return cond_prob, 1
+        return cond_prob, 1.
 
     contingency_table = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
     p_val = fisher_exact(contingency_table)
 
-    return cond_prob if top != 0 and bottom != 0 else 0, p_val
+    return cond_prob if top != 0. and bottom != 0. else 0., p_val
