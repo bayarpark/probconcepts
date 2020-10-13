@@ -1,4 +1,4 @@
-from core.fisher import *
+from algorithm.fisher import *
 from typing import *
 
 
@@ -39,7 +39,7 @@ def std_prob_measure(rule: 'Rule', par: 'FindParams') -> Tuple[float, float]:
     if absolute_prob >= cond_prob:  # Костыль -- если абсоютная в-ть >= условной, то возвращаем p_val = 1
         return cond_prob, 1.
 
-    contingency_table = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
-    p_val = fisher_exact(contingency_table)
+    crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
+    p_val = fisher_exact(crosstab)
 
     return cond_prob if top != 0. and bottom != 0. else 0., p_val

@@ -1,4 +1,4 @@
-import core.measures as measures
+import algorithm.measures as measures
 from dataclasses import dataclass
 from copy import copy
 from typing import *
@@ -47,6 +47,9 @@ class Literal:
         else:
             return f"~P{self.__ident}"
 
+    def __call__(self, obj: 'Object') -> bool:
+        pass
+
     def __invert__(self) -> 'Literal':
         return Literal(self.__ident, not self.__val)
 
@@ -89,11 +92,20 @@ class Rule:
         rule_str = rule_str[:-2] + "=> " + str(self.concl)
         return rule_str
 
+    def writefile(self, file: Any) -> None:
+        pass
+
     def __len__(self) -> int:
         return len(self.features)
 
     def is_nonnegative(self) -> bool:
+        """
+        Проверяет, что в посылке правила есть хотя бы один позитивный предикат
+        """
         return any(map(Literal.is_positive, self.features))
+
+    def enhance(self, lit: Literal) -> 'Rule':
+        return Rule(self.concl, self.features[:].append(lit))
 
     def prob(self, par: FindParams) -> float:
         return self.evaluate(par)[0]
@@ -116,7 +128,7 @@ class Rule:
 
 
 class Object:
-    def __init__(self, data: List[tuple]):  # Object = [(P_i: Bool, ~P_i: Bool)]
+    def __init__(self, data: List[Tuple[bool, bool]]):  # Object = [(P_i: Bool, ~P_i: Bool)]
         self.data = data
 
     def check_contradiction(self) -> bool:
@@ -129,10 +141,7 @@ class Object:
         self.data = list(map(lambda x: (x[1], False), self.data))
 
     def rule_applicability(self, rule: Rule) -> bool:
-        if type(rule) is not Rule:
-            raise TypeError
-        else:
-            return all(map(lambda x: x in self, rule.features))
+        return all(map(lambda x: x in self, rule.features))
 
     def add(self, lit: Literal) -> 'Object':
         self_copy = copy(self)
@@ -168,7 +177,7 @@ class Object:
 
 
 class FixPoint(Object):
-    def __init__(self, data: List[tuple]) -> None:
+    def __init__(self, data: List[Tuple[bool, bool]]) -> None:
         super().__init__(data)
         self.process = []
 

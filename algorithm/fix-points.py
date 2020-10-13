@@ -1,4 +1,4 @@
-from core.structure import *
+from algorithm.structure import *
 from math import log as mlog
 from copy import copy
 

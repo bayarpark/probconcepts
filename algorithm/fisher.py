@@ -39,4 +39,4 @@ def fisher_exact(crosstab: List[List[int]]) -> float:
             if sr_new == sr:
                 break
             sr = sr_new
-        return exp(-max(0, pa - p0 - log(sr)))
+        return exp(-max(0., pa - p0 - log(sr)))
