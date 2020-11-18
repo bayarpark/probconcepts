@@ -22,7 +22,7 @@ def krit(lits: Object, rules: List[Rule], par: FindParams) -> float:
     return sum(map(lambda x: log_prob(x, par), sat)) - sum(map(lambda x: log_prob(x, par), fal))
 
 
-def krit_add(lits: Object, lit: Literal, rules: List[Rule], par: FindParams) -> float:
+def krit_add(lits: Object, lit: Predicate, rules: List[Rule], par: FindParams) -> float:
     sat = []
     fal = []
     for rule in rules:
@@ -112,10 +112,10 @@ def fp(lits: List[Object], rules: List[Rule], par: FindParams) -> Set[Object]:
 
 # Далее идут чисто технические функции
 
-def __delta_argmax_add(lits: Object, applicable_concls: List[Literal], rules: List[Rule], par: FindParams) \
-        -> Tuple[float, Literal]:
+def __delta_argmax_add(lits: Object, applicable_concls: List[Predicate], rules: List[Rule], par: FindParams) \
+        -> Tuple[float, Predicate]:
     # Функция ищет максимальное изменение критерия при добавлении предиката
-    argmax = UndefinedLiteral()
+    argmax = UndefinedPredicate()
     krit_lits, kritmax_delta, kritmax_arg, kr = .0, .0, .0, .0
     for lit in applicable_concls:
         if lit not in lits:
@@ -129,10 +129,10 @@ def __delta_argmax_add(lits: Object, applicable_concls: List[Literal], rules: Li
     return kritmax_delta, argmax
 
 
-def __delta_argmax_del(lits: Object, applicable_concls: List[Literal], rules: List[Rule], par: FindParams) \
-        -> Tuple[float, Literal]:
+def __delta_argmax_del(lits: Object, applicable_concls: List[Predicate], rules: List[Rule], par: FindParams) \
+        -> Tuple[float, Predicate]:
     krit_lits = krit(lits, rules, par)
-    argmax = UndefinedLiteral()
+    argmax = UndefinedPredicate()
     kritmax_delta, kritmax_arg, kr = .0, .0, .0
     for lit in applicable_concls:
         if lit not in lits:
@@ -149,7 +149,7 @@ def log_prob(r: Rule, par: FindParams) -> float:
     return -mlog(1 - r.evaluate(par)[0])
 
 
-def get_applicable_conclusions(lits: Union[FixPoint, Object], rules: List[Rule]) -> List[Literal]:
+def get_applicable_conclusions(lits: Union[FixPoint, Object], rules: List[Rule]) -> List[Predicate]:
     applicable_concls = copy(lits)
     for rule in rules:
         if lits.rule_applicability(rule):

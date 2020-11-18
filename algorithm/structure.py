@@ -11,7 +11,7 @@ class FindParams:
     features_number: int
 
 
-class Literal:
+class Predicate:
 
     def __init__(self, ident: int, val: bool) -> None:
         if ident < 0:
@@ -50,18 +50,18 @@ class Literal:
     def __call__(self, obj: 'Object') -> bool:
         pass
 
-    def __invert__(self) -> 'Literal':
-        return Literal(self.__ident, not self.__val)
+    def __invert__(self) -> 'Predicate':
+        return Predicate(self.__ident, not self.__val)
 
 
-class UndefinedLiteral(Literal):
+class UndefinedPredicate(Predicate):
     """
     Неопределенный литерал
     """
 
     def __init__(self) -> None:
         super().__init__(0, False)
-        self._Literal__ident = -1
+        self._Predicate__ident = -1
 
     def __str__(self) -> str:
         return "undefLit"
@@ -71,7 +71,7 @@ class Rule:
     __prob: float = None
     __p_value: float = None
 
-    def __init__(self, conclusion: Literal, features: List[Literal] = None) -> None:
+    def __init__(self, conclusion: Predicate, features: List[Predicate] = None) -> None:
         if features is None:
             features = []
         self.concl = conclusion
@@ -102,9 +102,9 @@ class Rule:
         """
         Проверяет, что в посылке правила есть хотя бы один позитивный предикат
         """
-        return any(map(Literal.is_positive, self.features))
+        return any(map(Predicate.is_positive, self.features))
 
-    def enhance(self, lit: Literal) -> 'Rule':
+    def enhance(self, lit: Predicate) -> 'Rule':
         return Rule(self.concl, self.features[:].append(lit))
 
     def prob(self, par: FindParams) -> float:
@@ -143,7 +143,7 @@ class Object:
     def rule_applicability(self, rule: Rule) -> bool:
         return all(map(lambda x: x in self, rule.features))
 
-    def add(self, lit: Literal) -> 'Object':
+    def add(self, lit: Predicate) -> 'Object':
         self_copy = copy(self)
         if lit.val():
             self_copy.data[lit.id()] = (True, self.data[lit.id()][1])
@@ -151,7 +151,7 @@ class Object:
             self_copy.data[lit.id()] = (self.data[lit.id()][0], True)
         return self_copy
 
-    def delete(self, lit: Literal) -> 'Object':
+    def delete(self, lit: Predicate) -> 'Object':
         self_copy = copy(self)
         if lit.val():
             self_copy.data[lit.id()] = (False, self.data[lit.id()][1])
@@ -168,7 +168,7 @@ class Object:
     def __len__(self) -> int:
         return sum(map(sum, self.data))
 
-    def __contains__(self, item: Literal) -> bool:
+    def __contains__(self, item: Predicate) -> bool:
         return self.data[item.id()] == \
                self.data[item.id()][0] and item.val() or self.data[item.id()][1] and not item.val()
 
@@ -181,12 +181,12 @@ class FixPoint(Object):
         super().__init__(data)
         self.process = []
 
-    def step_add(self, p: Literal, rules: List[Rule]) -> 'FixPoint':
+    def step_add(self, p: Predicate, rules: List[Rule]) -> 'FixPoint':
         self_copy = self.add(p)
         self_copy.process.append((p, rules))
         return self_copy
 
-    def step_del(self, p: Literal, rules: List[Rule]) -> 'FixPoint':
+    def step_del(self, p: Predicate, rules: List[Rule]) -> 'FixPoint':
         self_copy = self.delete(p)
         self_copy.process.append((p, rules))
         return self_copy

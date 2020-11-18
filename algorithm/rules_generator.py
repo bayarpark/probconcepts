@@ -60,10 +60,10 @@ def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) 
             possible[lid][0] = False
             possible[lid][1] = False
             with open(f"{gen.dirname}/spl_{lid}.txt", "w") as f:
-                build_premise(Rule(Literal(lid, True)), [a[:] for a in possible], 0, f)
+                build_premise(Rule(Predicate(lid, True)), [a[:] for a in possible], 0, f)
 
             with open(f"{gen.dirname}/spl_~{lid}.txt", "w") as f:
-                build_premise(Rule(Literal(lid, False)), [a[:] for a in possible], 0, f)
+                build_premise(Rule(Predicate(lid, False)), [a[:] for a in possible], 0, f)
 
     # Наращиваение посылки
     def build_premise(rule: Rule, possible_lits: List[List[bool]], depth: int, file) -> bool:
@@ -78,7 +78,7 @@ def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) 
                     possible_lits[lid][tf] = False
                     # TODO оптимизировать
 
-                    new_rule = rule.enhance(Literal(lid, bool(tf)))
+                    new_rule = rule.enhance(Predicate(lid, bool(tf)))
 
                     if new_rule.is_nonnegative() and rule.prob(find) < new_rule.prob(find) and \
                             new_rule.p_value(find) < gen.confidence_level and check_subrules_prob(new_rule) and \
