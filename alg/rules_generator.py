@@ -1,5 +1,5 @@
-from algorithm.measures import *
-from algorithm.structure import *
+from alg.model import *
+from alg.structure import *
 from dataclasses import dataclass
 from os import mkdir
 
@@ -17,14 +17,13 @@ class GenParams:
 # запускается функция build_premise, которая
 
 
-def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) -> None:
+def build_spl(find_interval: Tuple[int, int], model: Model) -> None:
     """
     Строит правила.
     :param find_interval:
     Отрезок [a, b] ⊆ [0, `find.features_num`].
     Правила будут строиться для заключений, номера которых принимают значения из данного отрезка.
-    :param find: Основные параметры обучающей выборки
-    :param gen: Основные параметры генерации
+    :param model: Модель.
     :return: None. Печатает закономерности в соответствующий файл в директории /`gen.dirname`
     """
     if not (
@@ -44,8 +43,8 @@ def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) 
         # Вообще говоря, нужно проверять ВСЕ подправила
         for lit_del in rule.features:
             subrule = Rule(rule.concl, [lit for lit in rule.features if lit != lit_del])
-            if subrule.prob(find) >= rule.prob(find) and \
-                    subrule.p_value(find) <= rule.p_value(find):
+            if subrule.eval_prob(find) >= rule.eval_prob(find) and \
+                    subrule.eval_pvalue(find) <= rule.eval_pvalue(find):
                 return False
         return True
 
@@ -80,9 +79,9 @@ def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) 
 
                     new_rule = rule.enhance(Predicate(lid, bool(tf)))
 
-                    if new_rule.is_nonnegative() and rule.prob(find) < new_rule.prob(find) and \
-                            new_rule.p_value(find) < gen.confidence_level and check_subrules_prob(new_rule) and \
-                            rule.p_value(find) > new_rule.p_value(find) and check_fisher(new_rule):
+                    if new_rule.is_nonnegative() and rule.eval_prob(find) < new_rule.eval_prob(find) and \
+                            new_rule.eval_pvalue(find) < gen.confidence_level and check_subrules_prob(new_rule) and \
+                            rule.eval_pvalue(find) > new_rule.eval_pvalue(find) and check_fisher(new_rule):
 
                         if depth == gen.fully_depth - 1:
                             new_rule.writefile(file)
@@ -97,7 +96,7 @@ def build_spl(find_interval: Tuple[int, int], find: FindParams, gen: GenParams) 
                 if depth == 0:
                     return True
                 elif depth <= gen.base_depth:
-                    if rule.p_value(find) < gen.confidence_level and \
+                    if rule.eval_pvalue(find) < gen.confidence_level and \
                             check_subrules_prob(rule) and check_fisher(rule):
                         rule.writefile(file)
                         return True
