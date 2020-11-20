@@ -55,3 +55,28 @@ class Regularity:
             return self.prob, self.pvalue
         else:
             return self.prob, self.pvalue
+
+    def to_dict(self) \
+            -> Dict[str,
+                    Union[
+                        List[Dict[str, Union[Oper, Var, int, bool, float, Iterable[float], Iterable[int]]]],
+                        Dict[str, Union[Oper, Var, int, bool, float, Iterable[float], Iterable[int]]],
+                        float]]:
+        return {
+            'features': [p.to_dict() for p in self.features],
+            'conclusion': self.conclusion.to_dict(),
+            'prob': self.prob,
+            'pvalue': self.pvalue
+        }
+
+    @staticmethod
+    def from_dict(d: Dict[str,
+                          Union[
+                            List[Dict[str, Union[Oper, Var, int, bool, float, Iterable[float], Iterable[int]]]],
+                            Dict[str, Union[Oper, Var, int, bool, float, Iterable[float], Iterable[int]]],
+                            float]]) -> 'Regularity':
+        r = Regularity(
+            Predicate.from_dict(d['conclusion']),
+            [Predicate.from_dict(p) for p in d['features']])
+        r.prob, r.pvalue = d['prob'], d['pvalue']
+        return r

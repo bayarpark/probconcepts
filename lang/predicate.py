@@ -109,7 +109,7 @@ class Predicate:
 
     def __typecheck(self) -> None:
         if Oper.is_binary(self.opt):
-            if ((Var.isnom(self.vart)) or Var.isbin(self.vart)) and (self.opt != Oper.eq or self.opt != Oper.neq):
+            if ((Var.isnom(self.vart)) or Var.isbin(self.vart)) and (self.opt != Oper.eq and self.opt != Oper.neq):
                 raise TypeError("For 'Var.Nom' and 'Var.Bin' only 'Oper.eq' and 'Oper.neq' is allowed")
 
             elif (Var.isint(self.vart) or Var.isnom(self.vart)) and isinstance(self.arg, int) or \
@@ -122,13 +122,28 @@ class Predicate:
                 raise ValueError("var and args must be some type")
 
         elif Oper.isinterval(self.opt) or Oper.istails(self.opt):
-            if Var.isint(self.vart) and isinstance(self.arg, (int, int)) or \
-                    Var.isreal(self.vart) and isinstance(self.arg, (float, float)):
+            if Var.isint(self.vart) and isinstance(self.arg, tuple) or \
+                    Var.isreal(self.vart) and isinstance(self.arg, tuple):
                 pass
             else:
                 raise ValueError("var and args must be some type")
         else:
             raise TypeError("Unknown semantic for operation")
+
+    def to_dict(self) -> Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]:
+        return {
+            "opt": self.opt.value,
+            "vart": self.vart.value,
+            "ident": self.ident,
+            "arg": self.arg
+        }
+
+    @staticmethod
+    def from_dict(d: Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]) -> 'Predicate':
+        if Oper.isinterval(Oper(d['opt'])) or Oper.istails(Oper(d['opt'])):
+            return Predicate(Oper(d['opt']), Var(d['vart']), d['ident'], tuple(d['arg']))
+        else:
+            return Predicate(Oper(d['opt']), Var(d['vart']), d['ident'], d['arg'])
 
 
 class UndefinedPredicate(Predicate):

@@ -5,10 +5,10 @@ from typing import *
 class Var(Enum):
     # При добавлении новых типов переменных их семантику необходимо прописать в Predicate
     # и добавить необходимые операции в Oper
-    Bin = auto()  # {T, F}
-    Nom = auto()  # {named}
-    Int = auto()  # Int
-    Real = auto()  # float
+    Bin = 'B'           # {T, F}
+    Nom = 'N'           # {named}
+    Int = 'I'           # Int
+    Real = 'R'          # float
     undefined = auto()  # special undefined type
 
     @staticmethod
@@ -30,14 +30,14 @@ class Var(Enum):
 
 class Oper(Enum):
     # При добавлении новых операций в Oper их семантику необходимо прописать в Predicate
-    eq = '='  # x == c
-    neq = '!='  # x != c
-    le = '<'  # x < c
-    leq = '<='  # x <= c
-    ge = '>'  # x > c
-    geq = '>='  # x >= c
-    interval = auto()  # x in [a, b]
-    tails = auto()  # x not in [a, b]
+    eq = '='         # x == c
+    neq = '!='       # x != c
+    le = '<'         # x < c
+    leq = '<='       # x <= c
+    ge = '>'         # x > c
+    geq = '>='       # x >= c
+    interval = 'in'  # x in [a, b]
+    tails = 'nin'    # x not in [a, b]
 
     @staticmethod
     def iseq(opt: 'Oper') -> bool:

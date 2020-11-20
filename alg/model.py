@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import inf
 from typing import *
-from alg.measures import *
+from lang.predicate import Predicate
 
 
 @dataclass()
@@ -47,6 +47,7 @@ class Model:
             self.genpar = other
         else:
             raise TypeError("Unknown type, only 'Dataset' and 'GenParams' are allowed")
+
 
 
 def std_measure(rule: 'Regularity', model: Model) -> Tuple[float, float]:
