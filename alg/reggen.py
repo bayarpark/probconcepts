@@ -1,7 +1,7 @@
-from alg.model import *
-from alg.structure import *
 from dataclasses import dataclass
 from os import mkdir
+
+from alg.model import *
 
 
 @dataclass

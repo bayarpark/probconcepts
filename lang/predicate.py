@@ -1,151 +1,62 @@
-from lang.opers import *
 from typing import *
+
+from lang.opers import *
 
 
 class Predicate:
     def __init__(self,
-                 opt: Oper,
-                 vart: Var,
                  ident: int,
-                 args: Union[int, bool, float, Tuple[float, float], Tuple[int, int]]) -> None:
-        self.opt = opt
-        self.vart = vart
+                 vartype: Var,
+                 operation: Oper = None,
+                 opt: Union[Opers, str] = None,
+                 params: Union[int, bool, float, Tuple[float, float], Tuple[int, int]] = None) -> None:
         self.ident = ident
-        self.arg = args
-        self.__typecheck()
-        self.__normalize()
+        self.vartype = vartype
+
+        if operation is not None:
+            self.operation = operation
+        elif opt is not None and params is not None:
+            self.operation = Oper.make(opt, params)
+        else:
+            raise ValueError("`operation` or (`opt` and `params`) must be defined")
 
     def __call__(self, x: Union[int, bool, float]) -> bool:
-        if Oper.iseq(self.opt):
-            return self.arg == x
-
-        elif Oper.isneq(self.opt):
-            return self.arg != x
-
-        elif Oper.isle(self.opt):
-            return x < self.arg
-
-        elif Oper.isleq(self.opt):
-            return x <= self.arg
-
-        elif Oper.isge(self.opt):
-            return x > self.arg
-
-        elif Oper.isgeq(self.opt):
-            return x >= self.arg
-
-        elif Oper.isinterval(self.opt):
-            return self.arg[0] <= x <= self.arg[1]
-
-        elif Oper.istails(self.opt):
-            return not (self.arg[0] <= x <= self.arg[1])
-
-        else:
-            raise NotImplementedError("Semantic for `opt` is not implemented")
+        return self.operation(x)
 
     def __invert__(self) -> 'Predicate':
-        inverted = Predicate(self.opt, self.vart, self.ident, self.arg)
-        if Oper.iseq(inverted.opt):
-            inverted.opt = Oper.neq
-            inverted.__normalize()
-
-        elif Oper.isneq(inverted.opt):
-            inverted.opt = Oper.eq
-
-        elif Oper.isle(inverted.opt):
-            inverted.opt = Oper.geq
-
-        elif Oper.isleq(inverted.opt):
-            inverted.opt = Oper.ge
-
-        elif Oper.isge(inverted.opt):
-            inverted.opt = Oper.leq
-
-        elif Oper.isgeq(inverted.opt):
-            inverted.opt = Oper.le
-
-        elif Oper.isinterval(inverted.opt):
-            inverted.opt = Oper.tails
-
-        elif Oper.istails(inverted.opt):
-            inverted.opt = Oper.interval
-
-        else:
-            raise NotImplementedError("Semantic for `opt` is not implemented")
-
-        return inverted
+        return Predicate(self.ident, self.vartype, ~self.operation)  # TODO 
 
     def __str__(self) -> str:
-        if Oper.is_binary(self.opt):
-            return f"[x{self.ident} {self.opt.value} {self.arg}]"
-        elif Oper.isinterval(self.opt):
-            return f"[x{self.ident} in {self.arg[0]}, {self.arg[1]}]"
-        elif Oper.istails(self.opt):
-            return f"[x{self.ident} nin {self.arg[0]}, {self.arg[1]}]"
-        else:
-            raise NotImplementedError("Semantic for `opt` is not implemented")
+        return f"<x{self.ident}{str(self.operation)}>"
 
     def __eq__(self, other: 'Predicate') -> bool:
-        return self.vart == other.vart and self.opt == other.opt and \
-            self.ident == other.ident and self.arg == other.arg
+        return self.ident == other.ident and self.operation == other.operation and self.vartype == other.vartype
 
     def __hash__(self) -> int:
-        return hash((self.opt, self.vart, self.ident, self.arg))
+        return hash(self.to_dict())
 
     def __len__(self) -> int:
         return 1
 
     def is_positive(self) -> bool:
-        if Oper.isneq(self.opt) or (Var.isbin(self.vart) and not self.arg) or \
-                Oper.istails(self.opt):
-            return False
-        else:
-            return True
-
-    def __normalize(self) -> None:
-        if Oper.isneq(self.opt) and Var.isbin(self.vart):
-            self.opt = Oper.eq
-            self.arg = not self.arg
-
-    def __typecheck(self) -> None:
-        if Oper.is_binary(self.opt):
-            if ((Var.isnom(self.vart)) or Var.isbin(self.vart)) and (self.opt != Oper.eq and self.opt != Oper.neq):
-                raise TypeError("For 'Var.Nom' and 'Var.Bin' only 'Oper.eq' and 'Oper.neq' is allowed")
-
-            elif (Var.isint(self.vart) or Var.isnom(self.vart)) and isinstance(self.arg, int) or \
-                    (Var.isreal(self.vart)) and isinstance(self.arg, float) or \
-                    Var.isbin(self.vart) and isinstance(self.arg, bool):
-                pass
-            elif self.vart == Var.undefined:
-                pass
-            else:
-                raise ValueError("var and args must be some type")
-
-        elif Oper.isinterval(self.opt) or Oper.istails(self.opt):
-            if Var.isint(self.vart) and isinstance(self.arg, tuple) or \
-                    Var.isreal(self.vart) and isinstance(self.arg, tuple):
-                pass
-            else:
-                raise ValueError("var and args must be some type")
-        else:
-            raise TypeError("Unknown semantic for operation")
+        return self.operation.is_positive()
 
     def to_dict(self) -> Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]:
         return {
-            "opt": self.opt.value,
-            "vart": self.vart.value,
-            "ident": self.ident,
-            "arg": self.arg
+            "id": self.ident,
+            "var": self.vartype.name,
+            "op": self.operation.to_dict(),
         }
 
     @staticmethod
-    def from_dict(d: Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]) -> 'Predicate':
-        if Oper.isinterval(Oper(d['opt'])) or Oper.istails(Oper(d['opt'])):
-            return Predicate(Oper(d['opt']), Var(d['vart']), d['ident'], tuple(d['arg']))
-        else:
-            return Predicate(Oper(d['opt']), Var(d['vart']), d['ident'], d['arg'])
+    def from_dict(d: Dict[str, Union[int, str, Dict]]) -> 'Predicate':
+        return Predicate(
+            ident=d['id'],
+            vartype=Var[d['var']],
+            operation=Oper.from_dict(d['op'])
+        )
 
 
 class UndefinedPredicate(Predicate):
-    def __init__(self):
-        super().__init__(Oper.eq, Var.undefined, -1, -1)
+    def __init__(self) -> None:
+        super().__init__(0, vartype=Var.undefined, operation=UndefinedOperation())

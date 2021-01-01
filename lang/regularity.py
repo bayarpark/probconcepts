@@ -1,5 +1,5 @@
-from lang.predicate import *
 from alg.model import *
+from lang.predicate import *
 
 
 class Regularity:

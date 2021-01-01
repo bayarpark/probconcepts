@@ -1,31 +1,34 @@
 from dataclasses import dataclass
-from math import inf
 from typing import *
-from lang.predicate import Predicate
+
+import pandas as pd
+
+from alg.fisher import fisher_exact
 
 
 @dataclass()
 class Feature:
     name: str
+    variable: int
     domain: type
 
 
 @dataclass()
 class Dataset:
-    dataset: List[List[Union[float, int, bool]]]
+    dataset: List[List[Union[Union[float, None], Union[int, None], Union[bool, None]]]]
     size: int
     features: Dict[int, Feature]
 
 
 @dataclass
 class GenParams:
-    base_depth: float
-    fully_depth: float
+    base_depth: int
+    fully_depth: int
     confidence_level: float = 0.05
     dirname: str = "spl"
 
 
-DEFAULT_GEN_PARAMS = GenParams(2, inf)
+DEFAULT_GEN_PARAMS = GenParams(2, 999)
 
 
 class Model:
@@ -50,6 +53,14 @@ class Model:
 
 
 
+class PredicateTable:
+    def __init__(self, model: Model):
+        self.table = [[]]
+
+    def generate(self, frame: pd.DataFrame):
+        pass
+
+
 def std_measure(rule: 'Regularity', model: Model) -> Tuple[float, float]:
     top = 0
     bottom = 0
@@ -59,24 +70,22 @@ def std_measure(rule: 'Regularity', model: Model) -> Tuple[float, float]:
         d, n = 1, 1
         val_is_unknown = False
         for lit in rule.features:
-            p = obj[lit.id()]
-            if p == 0:
+            p = obj[lit.ident]
+            if p is None:
                 val_is_unknown = True
                 break
-            if (not lit.val() and p == -1) or (lit.val() and p == 1):
+            if not lit(p):
                 d = 0
                 break
-        p = obj[rule.concl.id()]
-        if val_is_unknown or p == 0:
+        p = obj[rule.conclusion.ident]
+        if val_is_unknown or p is None:
             d, n = 0, 0
         else:
             all_sum += 1
-            if rule.concl.val() and p == 1 \
-                    or not rule.concl.val() and p == -1:
+            if rule.conclusion(p):
                 cons_count += 1
 
-            if d == 0 or (not rule.concl.val() and p == -1) or \
-                    (rule.concl.val() and p == 1):
+            if d == 0 or not rule.conclusion(p):
                 n = 0
         top += n
         bottom += d

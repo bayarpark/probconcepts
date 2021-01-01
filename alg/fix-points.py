@@ -1,6 +1,5 @@
-from alg.structure import *
-from math import log as mlog
 from copy import copy
+from math import log as mlog
 
 
 def krit(lits: Object, rules: List[Regularity], model: Model) -> float:
