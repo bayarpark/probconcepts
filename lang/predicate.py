@@ -1,9 +1,9 @@
-from typing import *
-
 from lang.opers import *
 
 
 class Predicate:
+    use = True
+
     def __init__(self,
                  ident: int,
                  vartype: Var,
@@ -31,6 +31,9 @@ class Predicate:
 
     def __eq__(self, other: 'Predicate') -> bool:
         return self.ident == other.ident and self.operation == other.operation and self.vartype == other.vartype
+        # Есть проблемы с сравнением бинарных равенств, т.е. если признак принимает только {A, B}
+        # то в нашем случае Eq(A) := x == A НЕ РАВНО Neq(B) := x != B
+        # (а по-хорошему должно было бы, т.к. это одно и то же)
 
     def __hash__(self) -> int:
         return hash(self.to_dict())
@@ -39,7 +42,10 @@ class Predicate:
         return 1
 
     def is_positive(self) -> bool:
-        return self.operation.is_positive()
+        if self.vartype == Var.Bool and isinstance(self.operation, Eq):
+            return self.operation.params
+        else:
+            return self.operation.is_positive()
 
     def to_dict(self) -> Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]:
         return {

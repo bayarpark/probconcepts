@@ -1,23 +1,4 @@
-from dataclasses import dataclass
-from typing import *
-
-import pandas as pd
-
-from alg.fisher import fisher_exact
-
-
-@dataclass()
-class Feature:
-    name: str
-    variable: int
-    domain: type
-
-
-@dataclass()
-class Dataset:
-    dataset: List[List[Union[Union[float, None], Union[int, None], Union[bool, None]]]]
-    size: int
-    features: Dict[int, Feature]
+from alg.data import *
 
 
 @dataclass
@@ -29,7 +10,7 @@ class GenParams:
 
 
 DEFAULT_GEN_PARAMS = GenParams(2, 999)
-
+"""
 
 class Model:
     def __init__(self,
@@ -50,15 +31,6 @@ class Model:
             self.genpar = other
         else:
             raise TypeError("Unknown type, only 'Dataset' and 'GenParams' are allowed")
-
-
-
-class PredicateTable:
-    def __init__(self, model: Model):
-        self.table = [[]]
-
-    def generate(self, frame: pd.DataFrame):
-        pass
 
 
 def std_measure(rule: 'Regularity', model: Model) -> Tuple[float, float]:
@@ -100,3 +72,4 @@ def std_measure(rule: 'Regularity', model: Model) -> Tuple[float, float]:
     p_val = fisher_exact(crosstab)
 
     return cond_prob if top != 0. and bottom != 0. else 0., p_val
+"""

@@ -96,8 +96,14 @@ class Oper(ABC):
     def make(opt: Union[Opers, str],
              params: Union[int, bool, float, Tuple[float, float], Tuple[int, int]]
              ) -> 'Oper':
+
         try:
             if type(opt) is str:
+
+                # Special block for `
+                if type(params) is bool and opt == '!=':
+                    return Eq(not params)
+
                 return (globals()[Opers(opt).name])(params)
             elif type(opt) is Opers:
                 return (globals()[opt.name])(params)

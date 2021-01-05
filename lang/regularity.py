@@ -1,4 +1,3 @@
-from alg.model import *
 from lang.predicate import *
 
 
