@@ -1,4 +1,3 @@
-import re
 from lang.regularity import *
 
 

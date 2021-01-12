@@ -2,7 +2,7 @@ import json
 from copy import deepcopy
 from dataclasses import dataclass, asdict
 from typing import *
-from numpy import nan
+import numpy as np
 import pandas as pd
 
 from lang.opers import Eq, Neq, Var
@@ -128,6 +128,17 @@ class PredicateEncoder:
         self.df = df
         self.cd = cd
 
+    def __iter__(self):
+        q = []
+        for v1 in self.table.values():
+            for v2 in v1:
+                for p in v2:
+                    if p.use:
+                        q.append(p)
+
+        return iter(q)
+
+
     def generate_pt(self) -> None:
         """
 
@@ -209,14 +220,22 @@ class PredicateEncoder:
                     column = self.df.iloc[:, c]
                     if pd.api.types.is_integer_dtype(column):
                         try:
-                            cat_encoding[c] = dict(zip(q := column.dropna().unique().tolist(), q))
+                            cat_encoding[c] = dict(
+                                zip(q := column.dropna().unique().tolist(), q)
+                            )
                         except AttributeError:
-                            cat_encoding[c] = dict(zip(q := column.dropna().unique().to_numpy().tolist(), q))
+                            cat_encoding[c] = dict(
+                                zip(q := column.dropna().unique().to_numpy().tolist(), q)
+                            )
                     elif pd.api.types.is_object_dtype(column):
                         try:
-                            cat_encoding[c] = dict(zip(q := column.dropna().unique().tolist(), range(len(q))))
+                            cat_encoding[c] = dict(
+                                zip(q := column.dropna().unique().tolist(), range(len(q)))
+                            )
                         except AttributeError:
-                            cat_encoding[c] = dict(zip(q := column.dropna().unique().to_numpy().to_list(), range(len(q))))
+                            cat_encoding[c] = dict(
+                                zip(q := column.dropna().unique().to_numpy().to_list(), range(len(q)))
+                            )
                     elif pd.api.types.is_bool_dtype(column):
                         cat_encoding[c] = {False: 0, True: 1}
                     else:
@@ -272,10 +291,10 @@ class PredicateEncoder:
 
 
 class Sample:
-    data = None
-    pe = None
-    cd = None
-    size = None
+    data: List = None
+    pe: PredicateEncoder = None
+    cd: ColumnsDescription = None
+    shape: Tuple[int, int] = None
 
     def __init__(self,
                  data: pd.DataFrame,
@@ -304,7 +323,7 @@ class Sample:
             self.pe = pe
 
         self.pe.encode(encoding_output_path)
-        self.data = data.copy()
+        data = data.copy()
 
         if cd is not None:
             self.cd = cd
@@ -315,15 +334,20 @@ class Sample:
         # Replace cat_features
         if (cf := self.pe.encoding.get('cat_features')) is not None:
             for column, to_replace_dict in cf.items():
-                self.data.iloc[:, column] = self.data.iloc[:, column].map(to_replace_dict)
+                data.iloc[:, column] = data.iloc[:, column].map(to_replace_dict).astype('Int64')
 
         # Replace bool_features
         if (bf := self.pe.encoding.get('bool_features')) is not None:
             for column, to_replace_dict in bf.items():
-                self.data.iloc[:, column] = self.data.iloc[:, column].map(to_replace_dict)
+                data.iloc[:, column] = data.iloc[:, column].map(to_replace_dict).astype('boolean')
 
-        self.size = self.data.shape[0]
-        self.data = self.data.values.tolist()
+        self.shape = data.shape
+        self.data = data.values.tolist()
+
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                if (el := self.data[i][j]) is pd.NA or el is np.nan:
+                    self.data[i][j] = None
 
 
 def missing_cat_bool_typecast(df: pd.DataFrame, cd: ColumnsDescription) -> pd.DataFrame:

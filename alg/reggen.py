@@ -1,5 +1,5 @@
 from os import mkdir
-
+from lang.regularity import Regularity
 from alg.model import *
 
 
@@ -37,17 +37,17 @@ def build_spl(find_interval: Tuple[int, int], model: Model) -> None:
     except FileExistsError:
         pass
 
-    def check_subrules_prob(rule: Rule) -> bool:
+    def check_subrules_prob(rule: Regularity) -> bool:
         # Проверяет вероятности подправил на единицу меньше
         # Вообще говоря, нужно проверять ВСЕ подправила
         for lit_del in rule.features:
-            subrule = Rule(rule.concl, [lit for lit in rule.features if lit != lit_del])
+            subrule = Regularity(rule.concl, [lit for lit in rule.features if lit != lit_del])
             if subrule.eval_prob(find) >= rule.eval_prob(find) and \
                     subrule.eval_pvalue(find) <= rule.eval_pvalue(find):
                 return False
         return True
 
-    def check_fisher(rule: Rule) -> bool:
+    def check_fisher(rule: Regularity) -> bool:
         # TODO
         pass
 
@@ -58,13 +58,13 @@ def build_spl(find_interval: Tuple[int, int], model: Model) -> None:
             possible[lid][0] = False
             possible[lid][1] = False
             with open(f"{gen.dirname}/spl_{lid}.txt", "w") as f:
-                build_premise(Rule(Predicate(lid, True)), [a[:] for a in possible], 0, f)
+                build_premise(Regularity(Predicate(lid, True)), [a[:] for a in possible], 0, f)
 
             with open(f"{gen.dirname}/spl_~{lid}.txt", "w") as f:
-                build_premise(Rule(Predicate(lid, False)), [a[:] for a in possible], 0, f)
+                build_premise(Regularity(Predicate(lid, False)), [a[:] for a in possible], 0, f)
 
     # Наращиваение посылки
-    def build_premise(rule: Rule, possible_lits: List[List[bool]], depth: int, file) -> bool:
+    def build_premise(rule: Regularity, possible_lits: List[List[bool]], depth: int, file) -> bool:
         if depth < gen.fully_depth:
             enhance = False
             for lid in range(find.features_number):
