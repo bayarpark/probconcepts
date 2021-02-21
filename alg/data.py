@@ -118,94 +118,20 @@ def read_cd(read_path: str = 'train_cd.json') -> ColumnsDescription:
 
 
 class PredicateEncoder:
-    df: pd.DataFrame = None
-    cd: ColumnsDescription = None
     encoding: Dict = None
-    table: Dict[int, List[Tuple[Predicate, Predicate]]] = None  # TODO REFORMAT
+    cd: ColumnsDescription = None
 
-    def __init__(self, df: pd.DataFrame = None,
-                 cd: ColumnsDescription = None) -> None:
-        self.df = df
+    def __init__(self, cd: ColumnsDescription) -> None:
         self.cd = cd
 
-    def __iter__(self):
-        q = []
-        for v1 in self.table.values():
-            for v2 in v1:
-                for p in v2:
-                    if p.use:
-                        q.append(p)
-
-        return iter(q)
-
-
-    def generate_pt(self) -> None:
-        """
+    def fit(self, df: pd.DataFrame,
+            output_path='train_encoding.json') -> None:
 
         """
-        self.table = {}
-        if self.encoding is None:
-            raise AttributeError('Please, read or generate encoding first')
-
-        if (cat := self.encoding['cat_features']) is not None:
-            for feature_num, feature_vals in cat.items():
-                self.table[feature_num] = [
-                    (
-                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Eq(val)),
-                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Neq(val))
-                    )
-                    for val in feature_vals.values()
-                ]
-
-        if (boolf := self.encoding['bool_features']) is not None:
-            for (feature_num, feature_vals) in boolf.items():
-                self.table[feature_num] = [
-                    (
-                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(True)),
-                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(False))
-                    )
-                ]
-
-        if self.encoding['floating_features'] is not None:
-            pass  # TODO
-
-        if self.encoding['int_features'] is not None:
-            pass  # TODO
-
-    def negate(self, p: Predicate) -> 'PredicateEncoder':
-        if self.table is None:
-            raise AttributeError("Generate PE table first")
-
-        new_pe = PredicateEncoder()
-        new_pe.table = deepcopy(self.table)
-        if p.vartype == Var.Nom or p.vartype == Var.Bool:
-            if p.is_positive():
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[0] != p:
-                        p_tuple[0].use = False
-                    else:
-                        p_tuple[0].use = False
-                        p_tuple[1].use = False
-            else:
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[1] == p:
-                        p_tuple[1].use = False
-                        p_tuple[0].use = False
-        else:
-            pass  # TODO
-
-        return new_pe
-
-    def read_encoding(self, read_path: str = 'train_encoding.json') -> None:
-        with open(read_path, 'r') as read:
-            self.encoding = json.load(read)
-
-    def encode(self,
-               output_path: Union[str, None] = 'train_encoding.json') -> None:
-        """
-        Функция кодирует предикаты, категориальные переводит в числовые, бинарные в булевы,
+        Метод создает кодировку предикатов: категориальные переводит в числовые, бинарные в булевы,
         числовые (с плавающей точкой и целочисленные) бьет на интервалы и печатает кодировку в файл
 
+        :param df: pd.DataFrame with train sample
         :param output_path: Path to output file with columns description (if None will NOT print)
         """
         if self.encoding is not None:
@@ -217,7 +143,7 @@ class PredicateEncoder:
             if self.cd.cat_features is not None:
                 cat_encoding = {}
                 for c in self.cd.cat_features:
-                    column = self.df.iloc[:, c]
+                    column = df.iloc[:, c]
                     if pd.api.types.is_integer_dtype(column):
                         try:
                             cat_encoding[c] = dict(
@@ -244,8 +170,7 @@ class PredicateEncoder:
             if self.cd.bool_features is not None:
                 bool_encoding = {}
                 for b in self.cd.bool_features:
-                    column = self.df.iloc[:, b]
-                    print(column)
+                    column = df.iloc[:, b]
                     if pd.api.types.is_bool_dtype(column):
                         bool_encoding[b] = {False: False, True: True}
                     elif len(unique := column.dropna().unique()) == 2:
@@ -256,7 +181,7 @@ class PredicateEncoder:
             if self.cd.floating_features is not None:
                 floating_encoding = {}
                 for f in self.cd.floating_features:
-                    column = self.df.iloc[:, f]
+                    column = df.iloc[:, f]
                     if column.dtype == float:
                         pass  # TODO FLOAT ENCODING, НЕ ЗАБЫВАЙ ПРО NANы
                     else:
@@ -265,7 +190,7 @@ class PredicateEncoder:
             if self.cd.int_features is not None:
                 int_encoding = {}
                 for i in self.cd.int_features:
-                    column = self.df.iloc[:, i]
+                    column = df.iloc[:, i]
                     if column.dtype == int:
                         pass  # TODO CONTINUOUS INT ENCODING
                     else:
@@ -282,6 +207,107 @@ class PredicateEncoder:
                 with open(output_path, 'w') as out:
                     json.dump(self.encoding, out, indent=4)
 
+    def transform(self, df: pd.DataFrame) -> List[List[Union[int, float, bool]]]:
+        pass
+
+    def inverse_transfrom(self) -> pd.DataFrame:
+        pass
+
+    def read_encoding(self, read_path: str = 'train_encoding.json') -> None:
+        with open(read_path, 'r') as read:
+            self.encoding = json.load(read)
+
+
+class PredicateTable:
+    df: pd.DataFrame = None
+    cd: ColumnsDescription = None
+    pe: PredicateEncoder = None
+    table: Dict[int, List[Tuple[Predicate, Predicate]]] = None  # TODO REFORMAT
+
+    def __init__(self,
+                 pe: PredicateEncoder = None,
+                 df: pd.DataFrame = None,
+                 cd: ColumnsDescription = None) -> None:
+        self.pe = pe
+        self.df = df
+        self.cd = cd
+
+    def __iter__(self) -> Iterator:
+        q = []
+        for v1 in self.table.values():
+            for v2 in v1:
+                for p in v2:
+                    if p.use:
+                        q.append(p)
+
+        return iter(q)
+
+    def drop(self, p: Predicate) -> 'PredicateTable':
+        if self.table is None:
+            raise AttributeError("Generate PT first")
+
+        new_pe = PredicateTable()
+        new_pe.table = deepcopy(self.table)
+        if True:  # p.vartype == Var.Nom or p.vartype == Var.Bool:
+            if p.is_positive():
+                for p_tuple in new_pe.table[p.ident]:
+                    if p_tuple[0] != p:
+                        p_tuple[0].use = False
+                    else:
+                        p_tuple[0].use = False
+                        p_tuple[1].use = False
+            else:
+                for p_tuple in new_pe.table[p.ident]:
+                    if p_tuple[1] == p:
+                        p_tuple[1].use = False
+                        p_tuple[0].use = False
+        # else:
+        #    pass  # TODO
+
+        return new_pe
+
+    def generate_pt(self) -> None:
+
+        """
+
+        """
+
+        if self.pe is None:
+            if self.cd is not None and self.df is not None:
+                self.pe = PredicateEncoder(cd=self.cd)
+                self.pe.fit(df=self.df)
+            else:
+                raise AttributeError('To generate PredicateTable you need ')
+
+        self.table = {}
+        if self.pe.encoding is None:
+            raise AttributeError('Please, read or generate encoding first')
+
+        if (cat := self.pe.encoding['cat_features']) is not None:
+            for feature_num, feature_vals in cat.items():
+                self.table[feature_num] = [
+                    (
+                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Eq(val)),
+                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Neq(val))
+                    )
+                    for val in feature_vals.values()
+                ]
+
+        if (boolf := self.pe.encoding['bool_features']) is not None:
+            for (feature_num, feature_vals) in boolf.items():
+                self.table[feature_num] = [
+                    (
+                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(True)),
+                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(False))
+                    )
+                ]
+
+        if self.pe.encoding['floating_features'] is not None:
+            pass  # TODO
+
+        if self.pe.encoding['int_features'] is not None:
+            pass  # TODO
+
 
 """
 
@@ -292,6 +318,7 @@ class PredicateEncoder:
 
 class Sample:
     data: List = None
+    pt: PredicateTable = None
     pe: PredicateEncoder = None
     cd: ColumnsDescription = None
     shape: Tuple[int, int] = None
@@ -300,12 +327,14 @@ class Sample:
                  data: pd.DataFrame,
                  pe: PredicateEncoder = None,
                  cd: ColumnsDescription = None,
+                 # if you want create cd in Sample:
                  label: Union[str, int] = None,
                  cat_features: Iterable[Union[int, str]] = None,
                  floating_features: Iterable[Union[int, str]] = None,
                  int_features: Iterable[Union[int, str]] = None,
                  bool_features: Iterable[Union[int, str]] = None,
                  cd_output_path: Union[str, None] = 'train_cd.json',
+                 # if you want create encoding in Sample:
                  encoding_output_path: Union[str, None] = 'train_encode.json'
                  ) -> None:
 
@@ -318,11 +347,11 @@ class Sample:
                            output_path=cd_output_path)
         self.cd = cd
         if pe is None:
-            self.pe = PredicateEncoder(data, cd)
+            self.pe = PredicateEncoder(cd=cd)
+            self.pe.fit(df=data, output_path=encoding_output_path)
         else:
             self.pe = pe
 
-        self.pe.encode(encoding_output_path)
         data = data.copy()
 
         if cd is not None:

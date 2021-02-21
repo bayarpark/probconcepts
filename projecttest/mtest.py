@@ -1,6 +1,7 @@
 from alg.model import *
+from time import time
 
-a = pd.read_csv('/home/bayar/git/probconcepts/test/numbers/numbers.csv')
+a = pd.read_csv('/home/bayar/git/probconcepts/projecttest/numbers/numbers.csv')
 qwertty = ['lox' + str(i % 2) for i in range(360)]
 qwertty[359] = None
 a['25'] = qwertty
@@ -12,7 +13,10 @@ p.encode()
 p.generate_pt()
 s = Sample(a, p, cd)
 
-p.encoding
+ts = time()
+for _ in range(100000):
+    iter(p)
+print(f'{time() - ts} sec')
 
 
 

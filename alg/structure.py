@@ -1,3 +1,9 @@
+
+
+class Object:
+    pass
+
+
 """
 class Object:
     def __init__(self, data: List[Tuple[bool, bool]]):  # Object = [(P_i: Bool, ~P_i: Bool)]
