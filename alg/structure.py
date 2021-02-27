@@ -1,7 +1,70 @@
+import pandas as pd
+from typing import *
+from lang.predicate import Predicate
+from lang.regularity import Regularity
+from copy import deepcopy
 
 
 class Object:
-    pass
+    table: Dict[int, List[Tuple[Predicate, Predicate]]] = None
+
+    def __init__(self, data) -> None:
+        self.data = data
+
+    def check_contradiction(self) -> bool:
+        pass
+
+    def completion(self) -> None:
+        pass
+
+    def decompletion(self) -> None:
+        pass
+
+    def rule_applicability(self, reg: Regularity) -> bool:
+        pass
+
+    def add(self, p: Predicate) -> 'Object':
+        pass
+
+    def delete(self, p: Predicate) -> 'Object':
+        pass
+
+    def __eq__(self, other: 'Object') -> bool:
+        return self.table == other.table
+
+    def __hash__(self) -> int:
+        return hash(self.table)
+
+    def __len__(self) -> int:
+        pass
+
+    def __contains__(self, item: Predicate) -> bool:
+        pass
+
+    def __copy__(self) -> 'Object':
+        pass
+
+
+class FixPoint(Object):
+
+    def __init__(self, data) -> None:
+        super(FixPoint, self).__init__(data)
+        self.process = []
+
+    def step_add(self, p: Predicate, rules: List[Regularity]) -> 'FixPoint':
+        self_copy = self.add(p)
+        self_copy.process.append((p, rules))
+        return self_copy
+
+    def step_del(self, p: Predicate, rules: List[Regularity]) -> 'FixPoint':
+        self_copy = self.delete(p)
+        self_copy.process.append((p, rules))
+        return self_copy
+
+    def __copy__(self) -> 'FixPoint':
+        fp_copy = FixPoint(self.data[:])
+        fp_copy.process = self.process[:]
+        return fp_copy
 
 
 """
@@ -52,26 +115,5 @@ class Object:
 
     def __copy__(self) -> 'Object':
         return Object(self.data[:])
-
-
-class FixPoint(Object):
-    def __init__(self, data: List[Tuple[bool, bool]]) -> None:
-        super().__init__(data)
-        self.process = []
-
-    def step_add(self, p: Predicate, rules: List[Rule]) -> 'FixPoint':
-        self_copy = self.add(p)
-        self_copy.process.append((p, rules))
-        return self_copy
-
-    def step_del(self, p: Predicate, rules: List[Rule]) -> 'FixPoint':
-        self_copy = self.delete(p)
-        self_copy.process.append((p, rules))
-        return self_copy
-
-    def __copy__(self) -> 'FixPoint':
-        fp_copy = FixPoint(self.data[:])
-        fp_copy.process = self.process[:]
-        return fp_copy
 
 """
