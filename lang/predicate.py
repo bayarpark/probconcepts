@@ -5,13 +5,13 @@ class Predicate:
     use = True
 
     def __init__(self,
-                 ident: int,
-                 vartype: Var,
+                 ident: Union[int, str],
+                 vtype: Var,
                  operation: Oper = None,
                  opt: Union[Opers, str] = None,
                  params: Union[int, bool, float, Tuple[float, float], Tuple[int, int]] = None) -> None:
         self.ident = ident
-        self.vartype = vartype
+        self.vtype = vtype
 
         if operation is not None:
             self.operation = operation
@@ -24,13 +24,13 @@ class Predicate:
         return self.operation(x)
 
     def __invert__(self) -> 'Predicate':
-        return Predicate(self.ident, self.vartype, ~self.operation)  # TODO 
+        return Predicate(self.ident, self.vtype, ~self.operation)  # TODO 
 
     def __str__(self) -> str:
         return f"<x{self.ident}{str(self.operation)}>"
 
     def __eq__(self, other: 'Predicate') -> bool:
-        return self.ident == other.ident and self.operation == other.operation and self.vartype == other.vartype
+        return self.ident == other.ident and self.operation == other.operation and self.vtype == other.vtype
         # Есть проблемы с сравнением бинарных равенств, т.е. если признак принимает только {A, B}
         # то в нашем случае Eq(A) := x == A НЕ РАВНО Neq(B) := x != B
         # (а по-хорошему должно было бы, т.к. это одно и то же)
@@ -41,16 +41,20 @@ class Predicate:
     def __len__(self) -> int:
         return 1
 
+    @property
+    def name(self) -> Union[int, str]:
+        return self.ident
+
     def is_positive(self) -> bool:
-        if self.vartype == Var.Bool and isinstance(self.operation, Eq):
+        if self.vtype == Var.Bool and isinstance(self.operation, Eq):
             return self.operation.params
         else:
             return self.operation.is_positive()
 
-    def to_dict(self) -> Dict[str, Union[Oper, Var, int, bool, float, Tuple[float, float], Tuple[int, int]]]:
+    def to_dict(self) -> Dict:
         return {
             "id": self.ident,
-            "var": self.vartype.name,
+            "var": self.vtype.name,
             "op": self.operation.to_dict(),
         }
 
@@ -58,11 +62,11 @@ class Predicate:
     def from_dict(d: Dict[str, Union[int, str, Dict]]) -> 'Predicate':
         return Predicate(
             ident=d['id'],
-            vartype=Var[d['var']],
+            vtype=Var[d['var']],
             operation=Oper.from_dict(d['op'])
         )
 
 
 class UndefinedPredicate(Predicate):
     def __init__(self) -> None:
-        super().__init__(0, vartype=Var.undefined, operation=UndefinedOperation())
+        super().__init__(0, vtype=Var.undefined, operation=UndefinedOperation())

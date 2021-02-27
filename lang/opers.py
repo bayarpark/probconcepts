@@ -7,27 +7,27 @@ from typing import *
 class Var(Enum):
     # При добавлении новых типов переменных их семантику необходимо прописать в Predicate
     # и добавить необходимые операции в Oper
-    Bool = 'B'  # {T, F}
-    Nom = 'N'  # {named}
-    Int = 'I'  # Int
-    Float = 'F'  # float
+    Bool = 'B'          # {T, F}
+    Cat = 'C'           # Categorical -- named
+    Int = 'I'           # Int
+    Float = 'F'         # float
     undefined = auto()  # special undefined type
 
     @staticmethod
-    def isbin(vart: 'Var') -> bool:
-        return vart == Var.Bool
+    def isbin(vtype: 'Var') -> bool:
+        return vtype == Var.Bool
 
     @staticmethod
-    def isnom(vart: 'Var') -> bool:
-        return vart == Var.Nom
+    def iscat(vtype: 'Var') -> bool:
+        return vtype == Var.Cat
 
     @staticmethod
-    def isint(vart: 'Var') -> bool:
-        return vart == Var.Int
+    def isint(vtype: 'Var') -> bool:
+        return vtype == Var.Int
 
     @staticmethod
-    def isreal(vart: 'Var') -> bool:
-        return vart == Var.Float
+    def isreal(vtype: 'Var') -> bool:
+        return vtype == Var.Float
 
 
 ORDERED_VAR = [Var.Int, Var.Float]
@@ -42,13 +42,13 @@ class Opers(Enum):
     в) Прописать создание в make_operation
     """
 
-    Eq = '='  # x == c
-    Neq = '!='  # x != c
-    Le = '<'  # x < c
-    Leq = '<='  # x <= c
-    Ge = '>'  # x > c
-    Geq = '>='  # x >= c
-    In = 'in'  # x in [a, b]
+    Eq = '='     # x == c
+    Neq = '!='   # x != c
+    Le = '<'     # x < c
+    Leq = '<='   # x <= c
+    Ge = '>'     # x > c
+    Geq = '>='   # x >= c
+    In = 'in'    # x in [a, b]
     Nin = 'nin'  # x not in [a, b]
 
 
@@ -70,6 +70,14 @@ class Oper(ABC):
     def __invert__(self) -> 'Oper':
         pass
 
+    @property
+    def name(self) -> str:
+        return type(self).__name__
+
+    @property
+    def str_name(self):
+        return
+
     @abstractmethod
     def arity(self) -> int:
         pass
@@ -84,7 +92,7 @@ class Oper(ABC):
 
     def to_dict(self):
         return {
-            "n": type(self).__name__,
+            "n": self.name,
             "params": self.params
         }
 
@@ -98,14 +106,14 @@ class Oper(ABC):
              ) -> 'Oper':
 
         try:
-            if type(opt) is str:
+            if isinstance(opt, str):
 
-                # Special block for `
-                if type(params) is bool and opt == '!=':
+                # Special block for Bool
+                if isinstance(params, bool) and opt == '!=':
                     return Eq(not params)
 
                 return (globals()[Opers(opt).name])(params)
-            elif type(opt) is Opers:
+            elif isinstance(opt, Opers):
                 return (globals()[opt.name])(params)
             else:
                 raise TypeError('`opt` must have type Opers or str')
@@ -129,13 +137,13 @@ class Eq(OperBinary):
         self.params = params
 
     def __call__(self, x: ALLOWED_PYTHON_TYPES) -> bool:
-        if type(self.params) is float:
+        if isinstance(self.params, float):
             return isclose(x, self.params)
         else:
             return x == self.params
 
     def __invert__(self) -> OperBinary:
-        if type(self.params) is bool:
+        if isinstance(self.params, bool):
             return Eq(not self.params)
         else:
             return Neq(self.params)
@@ -153,7 +161,7 @@ class Neq(OperBinary):
         self.params = params
 
     def __call__(self, x: ALLOWED_PYTHON_TYPES) -> bool:
-        if type(self.params) is float:
+        if isinstance(self.params, float):
             return not isclose(x, self.params)
         else:
             return x != self.params

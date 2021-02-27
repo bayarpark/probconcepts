@@ -4,9 +4,11 @@ from dataclasses import dataclass, asdict
 from typing import *
 import numpy as np
 import pandas as pd
+from copy import copy
 
-from lang.opers import Eq, Neq, Var
+from lang.opers import Eq, Neq, Var, Oper, Opers
 from lang.predicate import Predicate
+from lang.regularity import Regularity
 
 """
 
@@ -207,8 +209,68 @@ class PredicateEncoder:
                 with open(output_path, 'w') as out:
                     json.dump(self.encoding, out, indent=4)
 
-    def transform(self, df: pd.DataFrame) -> List[List[Union[int, float, bool]]]:
-        pass
+    def transform(self, obj: Union[
+                    pd.DataFrame, pd.Series, Predicate, Any]
+                  ) -> Union[pd.DataFrame, pd.Series, Predicate, Any]:
+
+        if isinstance(obj, pd.DataFrame):
+            transformed_obj = obj.copy(deep=True)
+
+            # Replace cat_features
+            if (cf := self.encoding.get('cat_features')) is not None:
+                for column, to_replace_dict in cf.items():
+                    transformed_obj.iloc[:, column] = obj.iloc[:, column].map(to_replace_dict).astype('Int64')
+
+            # Replace bool_features
+            if (bf := self.encoding.get('bool_features')) is not None:
+                for column, to_replace_dict in bf.items():
+                    transformed_obj.iloc[:, column] = obj.iloc[:, column].map(to_replace_dict).astype('boolean')
+
+            return transformed_obj
+
+        elif isinstance(obj, pd.Series):
+            pass  # TODO
+        elif isinstance(obj, Predicate):
+            if Var.iscat(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.encoding['cat_features'][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=self.cd.features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isbin(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.encoding['bool_features'][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=self.cd.features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isint(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=self.cd.features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+
+            elif Var.isreal(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=self.cd.features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+            else:
+                raise TypeError('Unexpected type')
+
+            return transformed_pr
+
+        elif isinstance(obj, Regularity):
+            transformed_rg = Regularity(
+                self.transform(obj.conclusion),
+                [self.transform(p) for p in obj.premise]
+            )
+            return transformed_rg
+        else:
+            raise TypeError(f'{type(obj)} type is untransformable')
 
     def inverse_transfrom(self) -> pd.DataFrame:
         pass
@@ -248,7 +310,7 @@ class PredicateTable:
 
         new_pe = PredicateTable()
         new_pe.table = deepcopy(self.table)
-        if True:  # p.vartype == Var.Nom or p.vartype == Var.Bool:
+        if True:
             if p.is_positive():
                 for p_tuple in new_pe.table[p.ident]:
                     if p_tuple[0] != p:
@@ -261,8 +323,6 @@ class PredicateTable:
                     if p_tuple[1] == p:
                         p_tuple[1].use = False
                         p_tuple[0].use = False
-        # else:
-        #    pass  # TODO
 
         return new_pe
 
@@ -287,8 +347,8 @@ class PredicateTable:
             for feature_num, feature_vals in cat.items():
                 self.table[feature_num] = [
                     (
-                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Eq(val)),
-                        Predicate(ident=feature_num, vartype=Var.Nom, operation=Neq(val))
+                        Predicate(ident=feature_num, vtype=Var.Nom, operation=Eq(val)),
+                        Predicate(ident=feature_num, vtype=Var.Nom, operation=Neq(val))
                     )
                     for val in feature_vals.values()
                 ]
@@ -297,8 +357,8 @@ class PredicateTable:
             for (feature_num, feature_vals) in boolf.items():
                 self.table[feature_num] = [
                     (
-                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(True)),
-                        Predicate(ident=feature_num, vartype=Var.Bool, operation=Eq(False))
+                        Predicate(ident=feature_num, vtype=Var.Bool, operation=Eq(True)),
+                        Predicate(ident=feature_num, vtype=Var.Bool, operation=Eq(False))
                     )
                 ]
 
@@ -360,23 +420,20 @@ class Sample:
             self.cd = create_cd(data, label, cat_features, floating_features,
                                 int_features, bool_features, cd_output_path)
 
-        # Replace cat_features
-        if (cf := self.pe.encoding.get('cat_features')) is not None:
-            for column, to_replace_dict in cf.items():
-                data.iloc[:, column] = data.iloc[:, column].map(to_replace_dict).astype('Int64')
-
-        # Replace bool_features
-        if (bf := self.pe.encoding.get('bool_features')) is not None:
-            for column, to_replace_dict in bf.items():
-                data.iloc[:, column] = data.iloc[:, column].map(to_replace_dict).astype('boolean')
-
         self.shape = data.shape
+        self.data = self.pe.transform(data)
         self.data = data.values.tolist()
 
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                if (el := self.data[i][j]) is pd.NA or el is np.nan:
-                    self.data[i][j] = None
+        replace_missing_values(self.data, self.shape)
+
+
+def replace_missing_values(data: List[List],
+                           shape: Tuple[int, int] = None) -> None:
+
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if (el := data[i][j]) is pd.NA or el is np.nan:
+                data[i][j] = None
 
 
 def missing_cat_bool_typecast(df: pd.DataFrame, cd: ColumnsDescription) -> pd.DataFrame:
