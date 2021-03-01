@@ -7,26 +7,37 @@ from copy import deepcopy
 
 class Object:
     table: Dict[int, List[Tuple[Predicate, Predicate]]] = None
+    # возможно лучше будет использовать set вместо этого table
+    # т.к. хранить все возможные предикаты не такая уж и хорошая идея...
+    # непонятно
 
-    def __init__(self, data) -> None:
-        self.data = data
+    def __init__(self, data: Union[pd.Series, List]) -> None:
+        # Создает объект из строки
+        pass
 
     def check_contradiction(self) -> bool:
+        # проверяет, есть ли в объекте P и ~P
         pass
 
     def completion(self) -> None:
+        # добавляет все соответствующие отрицания предикатов
         pass
 
     def decompletion(self) -> None:
+        # удаляет все отрицания предикатов
         pass
 
     def rule_applicability(self, reg: Regularity) -> bool:
+        # проверяет, применимо ли правило к объекту, т.е.
+        # reg.premise подмножество self
         pass
 
     def add(self, p: Predicate) -> 'Object':
+        # добавляет предикат в объект
         pass
 
     def delete(self, p: Predicate) -> 'Object':
+        # удаляет предикат из объекта
         pass
 
     def __eq__(self, other: 'Object') -> bool:
@@ -36,12 +47,15 @@ class Object:
         return hash(self.table)
 
     def __len__(self) -> int:
+        # возвращает число предикатов в объекте
         pass
 
     def __contains__(self, item: Predicate) -> bool:
+        # проверяет, содержит ли объект предикат item
         pass
 
     def __copy__(self) -> 'Object':
+        # тут все понятно
         pass
 
 
