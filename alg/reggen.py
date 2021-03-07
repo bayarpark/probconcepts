@@ -3,99 +3,76 @@ from lang.regularity import Regularity
 from alg.model import *
 
 
-@dataclass
-class GenParams:
-    base_depth: float
-    fully_depth: float
-    confidence_level: float = 0.05
-    dirname: str = "spl"
-
-
 # Правила строятся следующим образом (используется обход графа "в глубину"):
 # Последовательно фиксируются заключения, далее, для каждого заключения
 # запускается функция build_premise, которая
 
 
-def build_spl(find_interval: Tuple[int, int], model: Model) -> None:
+def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
     """
-    Строит правила.
-    :param find_interval:
-    Отрезок [a, b] ⊆ [0, `find.features_num`].
-    Правила будут строиться для заключений, номера которых принимают значения из данного отрезка.
+    Function builds stronger probabilistic causal relations and writes them to a file
+    :param conclusions:
     :param model: Модель.
-    :return: None. Печатает закономерности в соответствующий файл в директории /`gen.dirname`
+    :return: None
     """
-    if not (
-            0 <= find_interval[0] < find.features_number
-            and
-            0 < find_interval[1] <= find.features_number
-    ):
-        raise IndexError("`find_interval` = [a, b] should be a subseteq of [0, `features_number`]")
 
     try:
-        mkdir(gen.dirname)
+        mkdir(model.dirname)
     except FileExistsError:
         pass
 
     def check_subrules_prob(rule: Regularity) -> bool:
-        # Проверяет вероятности подправил на единицу меньше
-        # Вообще говоря, нужно проверять ВСЕ подправила
-        for lit_del in rule.features:
-            subrule = Regularity(rule.concl, [lit for lit in rule.features if lit != lit_del])
-            if subrule.eval_prob(find) >= rule.eval_prob(find) and \
-                    subrule.eval_pvalue(find) <= rule.eval_pvalue(find):
+        """
+        Checks the probabilities of the subrules
+        """
+        for lit_del in rule.premise:
+            subrule = Regularity(rule.conclusion, [lit for lit in rule.premise if lit != lit_del])
+            if subrule.eval_prob(model) >= rule.eval_prob(model) and \
+                    subrule.eval_pvalue(model) <= rule.eval_pvalue(model):
                 return False
         return True
 
     def check_fisher(rule: Regularity) -> bool:
+        """
+
+        """
         # TODO
         pass
 
     # Генерация заключения
     def build_conclusion() -> None:
-        for lid in range(find_interval[0], find_interval[1] + 1):
-            possible = [[True, True] for _ in range(find.features_number)]
-            possible[lid][0] = False
-            possible[lid][1] = False
-            with open(f"{gen.dirname}/spl_{lid}.txt", "w") as f:
-                build_premise(Regularity(Predicate(lid, True)), [a[:] for a in possible], 0, f)
+        for lit in conclusions:
+            with open(f"{model.dirname}/spcr_{str(lit)}.txt", "w") as f:
+                build_premise(Regularity(lit), model.sample.pt.re_init(lit), 0, f)
 
-            with open(f"{gen.dirname}/spl_~{lid}.txt", "w") as f:
-                build_premise(Regularity(Predicate(lid, False)), [a[:] for a in possible], 0, f)
+            with open(f"{model.dirname}/spcr_{str(~lit)}.txt", "w") as f:
+                build_premise(Regularity(~lit), model.sample.pt.re_init(lit), 0, f)
 
     # Наращиваение посылки
-    def build_premise(rule: Regularity, possible_lits: List[List[bool]], depth: int, file) -> bool:
-        if depth < gen.fully_depth:
+    def build_premise(rule: Regularity, possible_lits: PredicateTable, depth: int, file) -> bool:
+        if depth < model.fully_depth:
             enhance = False
-            for lid in range(find.features_number):
-                for tf in range(2):
+            for lit in possible_lits:
+                new_rule = rule.enhance(lit)
 
-                    if not possible_lits:
-                        continue
+                if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
+                        new_rule.eval_pvalue(model) < model.confidence_level and check_subrules_prob(new_rule) and \
+                        rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule):
 
-                    possible_lits[lid][tf] = False
-                    # TODO оптимизировать
+                    if depth == model.fully_depth - 1:
+                        new_rule.writefile(file)
+                        enhance = True
+                    else:
+                        enhance = build_premise(new_rule, possible_lits.drop(lit), depth + 1, file) or enhance
 
-                    new_rule = rule.enhance(Predicate(lid, bool(tf)))
-
-                    if new_rule.is_nonnegative() and rule.eval_prob(find) < new_rule.eval_prob(find) and \
-                            new_rule.eval_pvalue(find) < gen.confidence_level and check_subrules_prob(new_rule) and \
-                            rule.eval_pvalue(find) > new_rule.eval_pvalue(find) and check_fisher(new_rule):
-
-                        if depth == gen.fully_depth - 1:
-                            new_rule.writefile(file)
-                            enhance = True
-                        else:
-                            enhance = build_premise(new_rule, [a[:] for a in possible_lits], depth + 1, file) or enhance
-
-                    elif depth < gen.base_depth:
-                        enhance = build_premise(new_rule, [a[:] for a in possible_lits], depth + 1, file) or enhance
+                elif depth < model.base_depth:
+                    enhance = build_premise(new_rule, possible_lits.drop(lit), depth + 1, file) or enhance
 
             if not enhance:
                 if depth == 0:
                     return True
-                elif depth <= gen.base_depth:
-                    if rule.eval_pvalue(find) < gen.confidence_level and \
+                elif depth <= model.base_depth:
+                    if rule.eval_pvalue(model) < model.confidence_level and \
                             check_subrules_prob(rule) and check_fisher(rule):
                         rule.writefile(file)
                         return True

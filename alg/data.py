@@ -304,6 +304,9 @@ class PredicateTable:
 
         return iter(q)
 
+    def re_init(self, p: Predicate) -> 'PredicateTable':
+        pass
+
     def drop(self, p: Predicate) -> 'PredicateTable':
         if self.table is None:
             raise AttributeError("Generate PT first")

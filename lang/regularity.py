@@ -33,6 +33,9 @@ class Regularity:
         rule_str += f" {self.prob}, {self.pvalue}"
         return rule_str
 
+    def writefile(self, file) -> NoReturn:
+        print(f'{str(self)} {self.prob} {self.pvalue}', file=file)
+
     def is_nonnegative(self) -> bool:
         """
         Проверяет, что в посылке правила есть хотя бы один позитивный предикат
