@@ -44,7 +44,7 @@ class BaseModel:
 
         if measure == 'std':
             self.measure = std_measure
-        elif type(measure).__name__ == 'functiom':
+        elif type(measure).__name__ == 'function':
             self.measure = measure
         
     

@@ -63,7 +63,7 @@ def build_spl(find_interval: Tuple[int, int], model: Model) -> None:
             with open(f"{gen.dirname}/spl_~{lid}.txt", "w") as f:
                 build_premise(Regularity(Predicate(lid, False)), [a[:] for a in possible], 0, f)
 
-    # Наращиваение посылки
+    # Наращивание посылки
     def build_premise(rule: Regularity, possible_lits: List[List[bool]], depth: int, file) -> bool:
         if depth < gen.fully_depth:
             enhance = False

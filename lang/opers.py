@@ -53,7 +53,7 @@ class Opers(Enum):
 
 
 class Oper(ABC):
-    params: Union[int, bool, float, Tuple[Union[int, bool, float]], List[Union[int, bool, float]]]
+    params: Union[int, bool, float, Tuple[Union[int, float]], List[Union[int, float]]]
 
     @abstractmethod
     def __call__(self, x: ALLOWED_PYTHON_TYPES) -> ALLOWED_PYTHON_TYPES:
