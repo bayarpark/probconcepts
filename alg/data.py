@@ -25,6 +25,7 @@ class ColumnsDescription:
     floating_features: List[int] = None
     int_features: List[int] = None
     bool_features: List[int] = None
+    type_dict: Dict[str, Var] = None
 
 
 def create_cd(df: pd.DataFrame,
@@ -90,6 +91,9 @@ def create_cd(df: pd.DataFrame,
     else:
         pass
 
+    # TODO
+
+    type_dict = ... # TODO
     cat_features = to_ind(cat_features)
     floating_features = to_ind(floating_features)
     int_features = to_ind(int_features)
@@ -99,7 +103,8 @@ def create_cd(df: pd.DataFrame,
                             cat_features=cat_features,
                             floating_features=floating_features,
                             int_features=int_features,
-                            bool_features=bool_features)
+                            bool_features=bool_features,
+                            type_dict=type_dict)
 
     write_cd(cd, output_path)
 
@@ -233,7 +238,7 @@ class PredicateEncoder:
         elif isinstance(obj, Predicate):
             if Var.iscat(obj.vtype):
                 tmp_op = copy(obj.operation)
-                tmp_op.params = self.encoding['cat_features'][obj.operation.params]
+                tmp_op.params = self.encoding['cat_features'][self.cd.features[obj.name]][obj.operation.params]
                 transformed_pr = Predicate(
                     ident=self.cd.features[obj.name],
                     vtype=obj.vtype,
@@ -241,7 +246,7 @@ class PredicateEncoder:
 
             elif Var.isbin(obj.vtype):
                 tmp_op = copy(obj.operation)
-                tmp_op.params = self.encoding['bool_features'][obj.operation.params]
+                tmp_op.params = self.encoding['bool_features'][self.cd.features[obj.name]][obj.operation.params]
                 transformed_pr = Predicate(
                     ident=self.cd.features[obj.name],
                     vtype=obj.vtype,

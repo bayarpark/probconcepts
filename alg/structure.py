@@ -5,13 +5,15 @@ from lang.regularity import Regularity
 from copy import deepcopy
 
 
-class Object:
-    table: Dict[int, List[Tuple[Predicate, Predicate]]] = None
-    # возможно лучше будет использовать set вместо этого table
-    # т.к. хранить все возможные предикаты не такая уж и хорошая идея...
-    # непонятно
 
-    def __init__(self, data: Union[pd.Series, List]) -> None:
+class Object:
+    table: Dict[int, Set[Predicate]] = None
+
+    def __init__(self, data: Union[pd.Series, List], pe: 'PredicateEncoder') -> None:
+        
+        p = Predicate(...)
+        
+        p_t = pe.transform(p)
         # Создает объект из строки
         pass
 

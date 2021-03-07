@@ -135,3 +135,9 @@ dmypy.json
 .vscode
 Clasterization.ipynb
 .gitignore
+
+train_cd.json
+train_encode.json
+train_encoding.json
+
+test

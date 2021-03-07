@@ -6,8 +6,8 @@ from math import inf
 
 get_intervals
 
-def get_intervals(data : List[float],
-                  coef : float = 1,
+def get_intervals(data  : List[float],
+                  coef  : float = 1,
                   alpha : float = 0.05) -> List[Tuple[float, float]]: 
     
     """ 

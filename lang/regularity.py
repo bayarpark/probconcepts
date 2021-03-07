@@ -20,7 +20,7 @@ class Regularity:
         # Аналогичная с __eq__ ситуация
         h = [p for p in self.premise]
         h.append(self.conclusion)
-        return hash(h)
+        return hash(tuple(h))
 
     def __len__(self) -> int:
         return len(self.premise)
