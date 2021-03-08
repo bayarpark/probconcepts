@@ -298,6 +298,7 @@ class PredicateTable:
     cd: ColumnsDescription = None
     pe: PredicateEncoder = None
     table: Dict[int, List[Tuple[Predicate, Predicate]]] = None  # TODO REFORMAT
+    used_predicate: Dict[int, List[List[bool, bool]]] = None
 
     def __init__(self,
                  pe: PredicateEncoder = None,
@@ -308,41 +309,59 @@ class PredicateTable:
         self.cd = cd
 
     def __iter__(self) -> Iterator:
-        q = []
-        for v1 in self.table.values():
-            for v2 in v1:
-                for p in v2:
-                    if p.use:
-                        q.append(p)
+        for k, v in self.table:
+            for k_used in range(len(v_used := self.used_predicate[k])):
+                if v_used[k_used][0]:
+                    yield self.table[k][k_used][0]
+                elif v_used[k_used][1]:
+                    yield self.table[k][k_used][1]
 
-        return iter(q)
-
-    def drop(self, p: Predicate) -> 'PredicateTable':
+    def init(self, p: Predicate) -> 'PredicateTable':
         if self.table is None:
             raise AttributeError("Generate PT first")
 
         new_pe = PredicateTable()
-        new_pe.table = deepcopy(self.table)
-        if True:
-            if p.is_positive():
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[0] != p:
-                        p_tuple[0].use = False
-                    else:
-                        p_tuple[0].use = False
-                        p_tuple[1].use = False
-            else:
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[1] == p:
-                        p_tuple[1].use = False
-                        p_tuple[0].use = False
+        new_pe.table = self.table
+        new_pe.used_predicate = deepcopy(self.used_predicate)
+
+        for k in range(len(lp := new_pe.table[p.ident])):
+            if p == lp[k][0] or p == lp[k][0]:
+                new_pe.used_predicate[p.ident][k][0] = False
+                new_pe.used_predicate[p.ident][k][1] = False
 
         return new_pe
 
-    def generate_pt(self) -> None:
+    def drop(self, p: Predicate) -> 'PredicateTable':
+        """
+        Метод запрещает использование предиката p при
+        """
+        if self.table is None:
+            raise AttributeError("Generate PT first")
+
+        new_pe = PredicateTable()
+        new_pe.table = self.table
+        new_pe.used_predicate = deepcopy(self.used_predicate)
+
+        if p.is_positive():
+            for k in range(len(upr := new_pe.used_predicate[p.ident])):
+                if p != new_pe.table[p.ident][k][0]:
+                    upr[k][0] = False
+                else:
+                    upr[k][0] = False
+                    upr[k][1] = False
+        else:
+            for k in range(len(upr := new_pe.used_predicate[p.ident])):
+                if new_pe.table[p.ident][k][1] == p:
+                    upr[k][1] = False
+                    upr[k][0] = False
+
+        return new_pe
+
+    def fit(self) -> None:
 
         """
-
+        Метод создает кодировку предикатов на выборке. В результате работы в self.encoding
+        записывается таблица со всевозможными предикатами и их отрицаниями
         """
 
         if self.pe is None:
@@ -380,6 +399,9 @@ class PredicateTable:
 
         if self.pe.encoding['int_features'] is not None:
             pass  # TODO
+
+        # create a special table for using flags
+        self.used_predicate = {k: [[True, True] for _ in range(len(self.table[k]))] for k in self.table.keys()}
 
 
 """
@@ -433,6 +455,8 @@ class Sample:
             self.cd = create_cd(data, label, cat_features, floating_features,
                                 int_features, bool_features, cd_output_path)
 
+        self.pt = PredicateTable(self.pe, data)
+        self.pt.fit()
         self.shape = data.shape
         self.data = self.pe.transform(data)
         self.data = data.values.tolist()
