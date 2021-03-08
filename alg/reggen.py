@@ -2,7 +2,6 @@ from os import mkdir
 from lang.regularity import Regularity
 from alg.model import *
 
-
 # Правила строятся следующим образом (используется обход графа "в глубину"):
 # Последовательно фиксируются заключения, далее, для каждого заключения
 # запускается функция build_premise, которая
@@ -10,16 +9,16 @@ from alg.model import *
 
 def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
     """
-    Function builds stronger probabilistic causal relations and writes them to a file
-    :param conclusions:
-    :param model: Модель.
+
+    :param conclusions: Предикаты в заключении
+    :param model: Модель, на которой оцениваются правила
     :return: None
     """
 
     try:
         mkdir(model.dirname)
     except FileExistsError:
-        pass
+        mkdir(f'{model.dirname}_1')
 
     def check_subrules_prob(rule: Regularity) -> bool:
         """
@@ -34,19 +33,23 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
 
     def check_fisher(rule: Regularity) -> bool:
         """
-
+        Checks p-values of the subrules
         """
+
+
+
         # TODO
-        pass
+        return True
 
     # Генерация заключения
     def build_conclusion() -> None:
         for lit in conclusions:
+            poss_lits = model.sample.pt.init(lit)
             with open(f"{model.dirname}/spcr_{str(lit)}.txt", "w") as f:
-                build_premise(Regularity(lit), model.sample.pt.re_init(lit), 0, f)
+                build_premise(Regularity(lit), poss_lits, 0, f)
 
             with open(f"{model.dirname}/spcr_{str(~lit)}.txt", "w") as f:
-                build_premise(Regularity(~lit), model.sample.pt.re_init(lit), 0, f)
+                build_premise(Regularity(~lit), poss_lits, 0, f)
 
     # Наращивание посылки
     def build_premise(rule: Regularity, possible_lits: PredicateTable, depth: int, file) -> bool:

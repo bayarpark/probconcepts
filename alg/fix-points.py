@@ -1,43 +1,48 @@
 from copy import copy
 from math import log as mlog
+from alg.structure import Object, FixPoint
+from lang.regularity import Regularity
+from lang.predicate import Predicate, UndefinedPredicate
+from alg.model import BaseModel
+from typing import *
 
 
-def krit(lits: Object, rules: List[Regularity], model: Model) -> float:
+def krit(lits: Object, rules: List[Regularity], model: BaseModel) -> float:
     """
     Мера объекта
-    :modelam lits: Объект
-    :modelam rules: Правила, относительно которых считается мера
-    :modelam model: Параметры поиска / идеализации
+    :param lits: Объект
+    :param rules: Правила, относительно которых считается мера
+    :param model: Параметры поиска / идеализации
     :return: Мера объекта, положительное число
     """
     sat = []
     fal = []
     for rule in rules:
         if lits.rule_applicability(rule):
-            if rule.concl in lits:
+            if rule.conclusion in lits:
                 sat.append(rule)
-            if ~ rule.concl in lits:
+            if ~ rule.conclusion in lits:
                 fal.append(rule)
     return sum(map(lambda x: log_prob(x, model), sat)) - sum(map(lambda x: log_prob(x, model), fal))
 
 
-def krit_add(lits: Object, lit: Predicate, rules: List[Regularity], model: Model) -> float:
+def krit_add(lits: Object, lit: Predicate, rules: List[Regularity], model: BaseModel) -> float:
     sat = []
     fal = []
     for rule in rules:
-        if (lit == rule.concl or ~ lit == rule.concl) and lits.rule_applicability(rule):
-            if rule.concl in lits:
+        if (lit == rule.conclusion or ~ lit == rule.conclusion) and lits.rule_applicability(rule):
+            if rule.conclusion in lits:
                 sat.append(rule)
-            if ~ rule.concl in lits:
+            if ~ rule.conclusion in lits:
                 fal.append(rule)
     return sum(map(lambda x: log_prob(x, model), sat)) - sum(map(lambda x: log_prob(x, model), fal))
 
 
-def step_operator(lits: Object, rules: List[Regularity], model: Model) -> Object:
+def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Object:
     applicable_concls = copy(lits)
     for rule in rules:
         if lits.rule_applicability(rule):
-            applicable_concls = applicable_concls.add(rule.concl)
+            applicable_concls = applicable_concls.add(rule.conclusion)
 
     delta_add, lit_add = __delta_argmax_add(lits, applicable_concls, rules, model)
     delta_del, lit_del = __delta_argmax_del(lits, applicable_concls, rules, model)
@@ -49,10 +54,10 @@ def step_operator(lits: Object, rules: List[Regularity], model: Model) -> Object
         return copy(lits)
 
 
-def step_operator_explicable(lits: FixPoint, rules: [Regularity], model: Model, k: int) -> FixPoint:
+def step_operator_explicable(lits: FixPoint, rules: [Regularity], model: BaseModel, k: int) -> FixPoint:
     def get_k_maxprob_rules(lit):  # Очень тупо, переделать
         return sorted(
-            [r for r in rules if r.concl == lit and lits.rule_applicability(r)],
+            [r for r in rules if r.conclusion == lit and lits.rule_applicability(r)],
             key=lambda l: l.evaluate_prob(), reverse=True
         )[:k]
 
@@ -61,15 +66,17 @@ def step_operator_explicable(lits: FixPoint, rules: [Regularity], model: Model, 
     delta_add, lit_add = __delta_argmax_add(lits, applicable_concls, rules, model)
     delta_del, lit_del = __delta_argmax_del(lits, applicable_concls, rules, model)
 
-    if krit(lits, rules, model) < krit(lits.add(lit_add), rules, model) and delta_add > delta_del and delta_add > 0:
+    if krit(lits, rules, model) < krit(lits.add(lit_add), rules, model) and delta_add > delta_del and \
+            delta_add > 0:
         return lits.step_add(lit_add, get_k_maxprob_rules(lit_add))
-    elif krit(lits, rules, model) < krit(lits.delete(lit_del), rules, model) and delta_del >= delta_add and delta_del > 0:
+    elif krit(lits, rules, model) < krit(lits.delete(lit_del), rules, model) and delta_del >= delta_add and \
+            delta_del > 0:
         return lits.step_del(lit_del, get_k_maxprob_rules(lit_del))
     else:
         return copy(lits)
 
 
-def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Regularity], model: Model, k: int) -> Set[FixPoint]:
+def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Regularity], model: BaseModel, k: int) -> Set[FixPoint]:
     if k <= 0:
         raise ValueError("`k` must be positive")
     else:
@@ -91,7 +98,7 @@ def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Regularity], model: Model
         return fix_points
 
 
-def fp(lits: List[Object], rules: List[Regularity], model: Model) -> Set[Object]:
+def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> Set[Object]:
     fix_points = set()
 
     for lit_now in lits:
@@ -111,7 +118,7 @@ def fp(lits: List[Object], rules: List[Regularity], model: Model) -> Set[Object]
 
 # Далее идут чисто технические функции
 
-def __delta_argmax_add(lits: Object, applicable_concls: List[Predicate], rules: List[Regularity], model: Model) \
+def __delta_argmax_add(lits: Object, applicable_concls: List[Predicate], rules: List[Regularity], model: BaseModel) \
         -> Tuple[float, Predicate]:
     # Функция ищет максимальное изменение критерия при добавлении предиката
     argmax = UndefinedPredicate()
@@ -128,7 +135,7 @@ def __delta_argmax_add(lits: Object, applicable_concls: List[Predicate], rules: 
     return kritmax_delta, argmax
 
 
-def __delta_argmax_del(lits: Object, applicable_concls: List[Predicate], rules: List[Regularity], model: Model) \
+def __delta_argmax_del(lits: Object, applicable_concls: List[Predicate], rules: List[Regularity], model: BaseModel) \
         -> Tuple[float, Predicate]:
     krit_lits = krit(lits, rules, model)
     argmax = UndefinedPredicate()
@@ -144,7 +151,7 @@ def __delta_argmax_del(lits: Object, applicable_concls: List[Predicate], rules: 
     return kritmax_delta, argmax
 
 
-def log_prob(r: Regularity, model: Model) -> float:
+def log_prob(r: Regularity, model: BaseModel) -> float:
     return -mlog(1 - r.evaluate(model)[0])
 
 
@@ -152,5 +159,5 @@ def get_applicable_conclusions(lits: Union[FixPoint, Object], rules: List[Regula
     applicable_concls = copy(lits)
     for rule in rules:
         if lits.rule_applicability(rule):
-            applicable_concls = applicable_concls.add(rule.concl)
+            applicable_concls = applicable_concls.add(rule.conclusion)
     return applicable_concls
