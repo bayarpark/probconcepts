@@ -48,7 +48,7 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
             with open(f"{model.dirname}/spcr_{str(~lit)}.txt", "w") as f:
                 build_premise(Regularity(~lit), model.sample.pt.re_init(lit), 0, f)
 
-    # Наращиваение посылки
+    # Наращивание посылки
     def build_premise(rule: Regularity, possible_lits: PredicateTable, depth: int, file) -> bool:
         if depth < model.fully_depth:
             enhance = False

@@ -290,6 +290,7 @@ class PredicateTable:
     cd: ColumnsDescription = None
     pe: PredicateEncoder = None
     table: Dict[int, List[Tuple[Predicate, Predicate]]] = None  # TODO REFORMAT
+    used_predicate: Dict[int, List[List[bool, bool]]] = None
 
     def __init__(self,
                  pe: PredicateEncoder = None,
@@ -300,14 +301,13 @@ class PredicateTable:
         self.cd = cd
 
     def __iter__(self) -> Iterator:
-        q = []
-        for v1 in self.table.values():
-            for v2 in v1:
-                for p in v2:
-                    if p.use:
-                        q.append(p)
-
-        return iter(q)
+        for k, v in self.table:
+            v_used = self.used_predicate[k]
+            for k_used in range(len(v_used)):
+                if v_used[k_used][0]:
+                    yield self.table[k][k_used][0]
+                elif v_used[k_used][1]:
+                    yield self.table[k][k_used][1]
 
     def re_init(self, p: Predicate) -> 'PredicateTable':
         pass
@@ -317,20 +317,21 @@ class PredicateTable:
             raise AttributeError("Generate PT first")
 
         new_pe = PredicateTable()
-        new_pe.table = deepcopy(self.table)
-        if True:
-            if p.is_positive():
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[0] != p:
-                        p_tuple[0].use = False
-                    else:
-                        p_tuple[0].use = False
-                        p_tuple[1].use = False
-            else:
-                for p_tuple in new_pe.table[p.ident]:
-                    if p_tuple[1] == p:
-                        p_tuple[1].use = False
-                        p_tuple[0].use = False
+        new_pe.table = self.table
+        new_pe.used_predicate = deepcopy(self.used_predicate)
+
+        if p.is_positive():
+            for k in range(len(new_pe.used_predicate[p.ident])):
+                if p != new_pe.table[p.ident][k][0]:
+                    new_pe.used_predicate[p.ident][k][0] = False
+                else:
+                    new_pe.used_predicate[p.ident][k][0] = False
+                    new_pe.used_predicate[p.ident][k][1] = False
+        else:
+            for k in range(len(new_pe.used_predicate[p.ident])):
+                if new_pe.table[p.ident][k][1] == p:
+                    new_pe.used_predicate[p.ident][k][1] = False
+                    new_pe.used_predicate[p.ident][k][0] = False
 
         return new_pe
 
@@ -376,6 +377,8 @@ class PredicateTable:
         if self.pe.encoding['int_features'] is not None:
             pass  # TODO
 
+        # create a special table for using flags
+        self.used_predicate = {k: [[True, True] for _ in range(len(self.table[k]))] for k in self.table.keys()}
 
 """
 

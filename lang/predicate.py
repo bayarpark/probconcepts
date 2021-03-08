@@ -2,7 +2,6 @@ from lang.opers import *
 
 
 class Predicate:
-    use = True
 
     def __init__(self,
                  ident: Union[int, str],

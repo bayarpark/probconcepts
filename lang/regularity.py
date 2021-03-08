@@ -33,7 +33,7 @@ class Regularity:
         rule_str += f" {self.prob}, {self.pvalue}"
         return rule_str
 
-    def writefile(self, file) -> NoReturn:
+    def writefile(self, file) -> None:
         print(f'{str(self)} {self.prob} {self.pvalue}', file=file)
 
     def is_nonnegative(self) -> bool:
