@@ -91,9 +91,17 @@ def create_cd(df: pd.DataFrame,
     else:
         pass
 
-    # TODO
+    def get_col_type(col: str) -> Var:
+        if col2ind[col] in bool_features:
+            return 'B'
+        elif col2ind[col] in cat_features:
+            return 'C'
+        elif col2ind[col] in int_features:
+            return 'I'
+        elif col2ind[col] in floating_features:
+            return 'F'
 
-    type_dict = ... # TODO
+    type_dict = {col: get_col_type(col) for col in df.columns}
     cat_features = to_ind(cat_features)
     floating_features = to_ind(floating_features)
     int_features = to_ind(int_features)
