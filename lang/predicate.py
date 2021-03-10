@@ -35,7 +35,7 @@ class Predicate:
         # (а по-хорошему должно было бы, т.к. это одно и то же)
 
     def __hash__(self) -> int:
-        return hash(self.to_dict())
+        return hash((self.ident, self.vtype, self.operation))
 
     def __len__(self) -> int:
         return 1

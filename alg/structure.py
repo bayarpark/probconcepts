@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import *
+from lang.opers import *
 from lang.predicate import Predicate
 from lang.regularity import Regularity
 from copy import deepcopy
@@ -9,55 +10,81 @@ from copy import deepcopy
 class Object:
     table: Dict[int, Set[Predicate]] = None
 
-    def __init__(self, data: Union[pd.Series, List], pe: 'PredicateEncoder') -> None:
-        
-        p = Predicate(...)
-        
-        p_t = pe.transform(p)
-        # Создает объект из строки
-        pass
+    def __init__(self, data: Union[pd.Series, Dict], pe: 'PredicateEncoder') -> None:
+        self.table = {pe.cd.features[col]: {pe.transform(Predicate(col, vtype=Var(pe.cd.type_dict[col]), opt='=', \
+                                                                   params=data[col]))} for col in data.keys()}
 
     def check_contradiction(self) -> bool:
-        # проверяет, есть ли в объекте P и ~P
-        pass
+        # проверка на противоречивость
+
+        for col in self.table:
+            for pr in self.table[col]:
+                if ~pr in self.table[col]:
+                    return True
+
+        return False
 
     def completion(self) -> None:
         # добавляет все соответствующие отрицания предикатов
-        pass
+
+        for col in self.table:
+            neg_pr = {}
+            for pr in self.table[col]:
+                neg_pr.add(~pr)
+            self.table[col].update(neg_pr)
+
 
     def decompletion(self) -> None:
         # удаляет все отрицания предикатов
-        pass
+
+        for col in self.table:
+            neg_pr = {}
+            for pr in self.table[col]:
+                if not pr.is_positive():
+                    self.table[col].remove(pr)
+
 
     def rule_applicability(self, reg: Regularity) -> bool:
         # проверяет, применимо ли правило к объекту, т.е.
         # reg.premise подмножество self
-        pass
+
+        for pr in reg.premise:
+            if pr not in self.table[pr.ident]:
+                return False
+
+        return True
 
     def add(self, p: Predicate) -> 'Object':
         # добавляет предикат в объект
-        pass
+
+        self.table[p.ident].add(p)
 
     def delete(self, p: Predicate) -> 'Object':
         # удаляет предикат из объекта
-        pass
+
+        # first check is table contains predicate #TODO add error
+        self.table[p.ident].remove(p)
 
     def __eq__(self, other: 'Object') -> bool:
         return self.table == other.table
 
     def __hash__(self) -> int:
-        return hash(self.table)
+        pass
+        # return hash(self.table) can't hash dict[int : set]
 
     def __len__(self) -> int:
         # возвращает число предикатов в объекте
-        pass
+        return sum(map(len, self.table))
 
-    def __contains__(self, item: Predicate) -> bool:
+    def __str__(self) -> str:
+        return str(self.table)
+    
+    def __contains__(self, pr: Predicate) -> bool:
         # проверяет, содержит ли объект предикат item
-        pass
+        return pr in self.table[pr.ident]
+
 
     def __copy__(self) -> 'Object':
-        # тут все понятно
         pass
 
 
