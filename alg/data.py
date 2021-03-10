@@ -298,7 +298,7 @@ class PredicateTable:
     cd: ColumnsDescription = None
     pe: PredicateEncoder = None
     table: Dict[int, List[Tuple[Predicate, Predicate]]] = None  # TODO REFORMAT
-    used_predicate: Dict[int, List[List[bool, bool]]] = None
+    used_predicate: Dict[int, List[List[bool]]] = None
 
     def __init__(self,
                  pe: PredicateEncoder = None,
@@ -309,7 +309,7 @@ class PredicateTable:
         self.cd = cd
 
     def __iter__(self) -> Iterator:
-        for k, v in self.table:
+        for k, v in self.table.items():
             for k_used in range(len(v_used := self.used_predicate[k])):
                 if v_used[k_used][0]:
                     yield self.table[k][k_used][0]
@@ -379,8 +379,8 @@ class PredicateTable:
             for feature_num, feature_vals in cat.items():
                 self.table[feature_num] = [
                     (
-                        Predicate(ident=feature_num, vtype=Var.Nom, operation=Eq(val)),
-                        Predicate(ident=feature_num, vtype=Var.Nom, operation=Neq(val))
+                        Predicate(ident=feature_num, vtype=Var.Cat, operation=Eq(val)),
+                        Predicate(ident=feature_num, vtype=Var.Cat, operation=Neq(val))
                     )
                     for val in feature_vals.values()
                 ]

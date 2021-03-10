@@ -43,7 +43,9 @@ class Regularity:
         return any(map(Predicate.is_positive, self.premise))
 
     def enhance(self, p: Predicate) -> 'Regularity':
-        return Regularity(self.conclusion, self.premise[:].append(p))
+        new_premise = self.premise[:]
+        new_premise.append(p)
+        return Regularity(self.conclusion, new_premise)
 
     def eval_prob(self, model) -> float:
         return self.evaluate(model)[0]

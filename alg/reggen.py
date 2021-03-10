@@ -18,17 +18,17 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
     try:
         mkdir(model.dirname)
     except FileExistsError:
-        mkdir(f'{model.dirname}_1')
+        mkdir(f'{model.dirname}_1')  # BUG TODO
 
     def check_subrules_prob(rule: Regularity) -> bool:
         """
         Checks the probabilities of the subrules
         """
-        for lit_del in rule.premise:
-            subrule = Regularity(rule.conclusion, [lit for lit in rule.premise if lit != lit_del])
-            if subrule.eval_prob(model) >= rule.eval_prob(model) and \
-                    subrule.eval_pvalue(model) <= rule.eval_pvalue(model):
-                return False
+        # for lit_del in rule.premise:
+        #     subrule = Regularity(rule.conclusion, [lit for lit in rule.premise if lit != lit_del])
+        #     if subrule.eval_prob(model) >= rule.eval_prob(model) and \
+        #             subrule.eval_pvalue(model) <= rule.eval_pvalue(model):
+        #         return False
         return True
 
     def check_fisher(rule: Regularity) -> bool:
@@ -57,11 +57,11 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
             enhance = False
             for lit in possible_lits:
                 new_rule = rule.enhance(lit)
-
+                print(new_rule, new_rule.eval_prob(model))
                 if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
                         new_rule.eval_pvalue(model) < model.confidence_level and check_subrules_prob(new_rule) and \
                         rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule):
-
+                    print(new_rule)
                     if depth == model.fully_depth - 1:
                         new_rule.writefile(file)
                         enhance = True
