@@ -59,6 +59,9 @@ class Oper(ABC):
     def __call__(self, x: ALLOWED_PYTHON_TYPES) -> ALLOWED_PYTHON_TYPES:
         pass
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     @abstractmethod
     def __str__(self) -> str:
         pass
