@@ -91,7 +91,7 @@ def create_cd(df: pd.DataFrame,
     else:
         pass
 
-    def get_col_type(col: str) -> Var:
+    def get_col_type(col: str) -> str:
         if col2ind[col] in bool_features:
             return 'B'
         elif col2ind[col] in cat_features:

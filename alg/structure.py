@@ -3,67 +3,89 @@ from typing import *
 from lang.opers import *
 from lang.predicate import Predicate
 from lang.regularity import Regularity
-from copy import deepcopy
-
+from copy import copy, deepcopy
+from alg.data import PredicateTable
 
 
 class Object:
     table: Dict[int, Set[Predicate]] = None
 
-    def __init__(self, data: Union[pd.Series, Dict], pe: 'PredicateEncoder') -> None:
-        self.table = {pe.cd.features[col]: {pe.transform(Predicate(col, vtype=Var(pe.cd.type_dict[col]), opt='=', \
-                                                                   params=data[col]))} for col in data.keys()}
+    def __init__(self, data: Union[pd.Series, Dict], pt: PredicateTable = None) -> None:
+        if pt is None and type(data) is dict:
+            self.table = data
+        else:
+            self.table = {pt.pe.cd.features[col]: {pt.pe.transform(Predicate(col,
+                                                                             vtype=Var(pt.pe.cd.type_dict[col]),
+                                                                             opt='=',
+                                                                             params=data[col]))} for col in data.keys()}
 
     def check_contradiction(self) -> bool:
-        # проверка на противоречивость
-
-        for col in self.table:
-            for pr in self.table[col]:
-                if ~pr in self.table[col]:
+        # contradiction if object contains p and ~p
+        for feature in self.table.keys():
+            for pr in self.table[feature]:
+                if ~pr in self.table[feature]:
                     return True
-
         return False
 
-    def completion(self) -> None:
-        # добавляет все соответствующие отрицания предикатов
+    def completion(self, pt) -> None:
+        # add all neg predicates for each pos predicate
+        for feature in self.table.keys():
+            new_features = set()
+            for pr in self.table[feature]:
+                new_features.add(pr)
+                if pr.is_positive():
+                    for pr_tuple in pt.table[feature]:
+                        if pr_tuple[0] != pr:
+                            new_features.add(pr_tuple[1])
 
-        for col in self.table:
-            neg_pr = {}
-            for pr in self.table[col]:
-                neg_pr.add(~pr)
-            self.table[col].update(neg_pr)
-
+            self.table[feature] = new_features
 
     def decompletion(self) -> None:
-        # удаляет все отрицания предикатов
-
-        for col in self.table:
-            neg_pr = {}
-            for pr in self.table[col]:
-                if not pr.is_positive():
-                    self.table[col].remove(pr)
-
+        # delete all neg predicates
+        for feature in self.table.keys():
+            pos_pr = set()
+            for pr in self.table[feature]:
+                if pr.is_positive():
+                    pos_pr.add(pr)
+                self.table[feature] = pos_pr
 
     def rule_applicability(self, reg: Regularity) -> bool:
-        # проверяет, применимо ли правило к объекту, т.е.
+        # проверяет, применимо ли правило к объекту, т.е.   #TODO  add transform mode
         # reg.premise подмножество self
-
         for pr in reg.premise:
             if pr not in self.table[pr.ident]:
                 return False
-
         return True
 
     def add(self, p: Predicate) -> 'Object':
-        # добавляет предикат в объект
-
-        self.table[p.ident].add(p)
+        # добавляет предикат в объект и возвращает копию    #TODO need deepcopy?
+        new_obj = Object(deepcopy(self.table))
+        new_obj.table[p.ident].add(p)
+        return new_obj
 
     def delete(self, p: Predicate) -> 'Object':
         # удаляет предикат из объекта
-
-        # first check is table contains predicate #TODO add error
+        # first check is table contains predicate       #TODO add error
         self.table[p.ident].remove(p)
+        new_obj = Object(deepcopy(self.table))
+        new_obj.table[p.ident].remove(p)
+        return new_obj
+
+    def update(self, p: Predicate) -> None:
+        self.table[p.ident].add(p)
+
+    def remove(self, p: Predicate) -> None:
+        self.table[p.ident].remove(p)
+
+    @staticmethod
+    def from_dict(new_dict: Dict[str, Set[Predicate]]) -> 'Object':
+        return Object(data=new_dict)
+
+    def to_dict(self) -> Dict:
+        if type(self.table) is dict:
+            return self.table
+        else:                               # if pd.Series
+            return self.table.to_dict()
 
     def __eq__(self, other: 'Object') -> bool:
         return self.table == other.table
@@ -74,18 +96,28 @@ class Object:
 
     def __len__(self) -> int:
         # возвращает число предикатов в объекте
-        return sum(map(len, self.table))
+        return sum(map(len, self.table.values()))
 
     def __str__(self) -> str:
-        return str(self.table)
-    
+        str_obj = ""
+        for feature in self.table.keys():
+            str_obj += str(feature) + ": {"
+            for pr in self.table[feature]:
+                str_obj += str(pr)
+            str_obj += "} "
+        return str_obj
+
     def __contains__(self, pr: Predicate) -> bool:
         # проверяет, содержит ли объект предикат item
         return pr in self.table[pr.ident]
 
-
     def __copy__(self) -> 'Object':
-        pass
+        new_obj = Object(copy(self.table))
+        return new_obj
+
+    def __deepcopy__(self) -> 'Object':
+        new_obj = Object(deepcopy(self.table))
+        return new_obj
 
 
 class FixPoint(Object):
