@@ -2,7 +2,7 @@ from math import log, exp, lgamma
 from typing import List
 
 
-def fisher_exact(crosstab: List[List[int]], enable_assert=True) -> float:
+def fisher_exact(crosstab: List[List[int]], enable_assert=False) -> float:
     """
     Right tail fisher's exact projecttest
     for 2x2 contingency table
@@ -12,7 +12,7 @@ def fisher_exact(crosstab: List[List[int]], enable_assert=True) -> float:
     """
 
     if enable_assert:
-        if any(map(lambda x: x < 0, crosstab)):
+        if crosstab[0][0] < 0 or crosstab[0][1] < 0 or crosstab[1][0] < 0 or crosstab[1][1]:
             raise ValueError("All values in `crosstab` must be nonnegative.")
 
     a = crosstab[0][0]

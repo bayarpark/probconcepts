@@ -54,7 +54,7 @@ def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Ob
         return copy(lits)
 
 
-def step_operator_explicable(lits: FixPoint, rules: [Regularity], model: BaseModel, k: int) -> FixPoint:
+def step_operator_explicable(lits: FixPoint, rules: List[Regularity], model: BaseModel, k: int) -> FixPoint:
     def get_k_maxprob_rules(lit):  # Очень тупо, переделать
         return sorted(
             [r for r in rules if r.conclusion == lit and lits.rule_applicability(r)],
@@ -76,7 +76,7 @@ def step_operator_explicable(lits: FixPoint, rules: [Regularity], model: BaseMod
         return copy(lits)
 
 
-def fp_explicit_with_k_rules(lits: [FixPoint], rules: [Regularity], model: BaseModel, k: int) -> Set[FixPoint]:
+def fp_explicit_with_k_rules(lits: [FixPoint], rules: List[Regularity], model: BaseModel, k: int) -> Set[FixPoint]:
     if k <= 0:
         raise ValueError("`k` must be positive")
     else:

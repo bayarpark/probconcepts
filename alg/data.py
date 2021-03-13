@@ -34,24 +34,17 @@ def create_cd(df: pd.DataFrame,
               floating_features: Iterable[Union[int, str]] = None,
               int_features: Iterable[Union[int, str]] = None,
               bool_features: Iterable[Union[int, str]] = None,
-              output_path: str = 'train_cd.json'
+              output_path: str = 'result/train_cd.json'
               ) -> ColumnsDescription:
     """
 
     :param df: pandas.DataFrame
-
     :param label: A zero-based index of the column that defines the target variable (only for classification)
-
     :param cat_features: Zero-based indices (or names) of columns that define categorical features
-
     :param floating_features: Zero-based indices (or names) of columns that define numeric (floating) features
-
     :param int_features: Zero-based indices (or names) of columns that define numeric (integer) features
-
     :param bool_features: Zero-based indices (or names) of columns that define binary (not only T,F or 0,1) features
-
     :param output_path: Path to output file with columns description (if None will NOT print)
-
     :returns: ColumnsDescription
     """
 
@@ -91,7 +84,7 @@ def create_cd(df: pd.DataFrame,
     else:
         pass
 
-    def get_col_type(col: str) -> Var:
+    def get_col_type(col: str) -> str:
         if col2ind[col] in bool_features:
             return 'B'
         elif col2ind[col] in cat_features:
@@ -119,7 +112,7 @@ def create_cd(df: pd.DataFrame,
     return cd
 
 
-def write_cd(cd: ColumnsDescription, write_path: str = 'train_cd.json') -> None:
+def write_cd(cd: ColumnsDescription, write_path: str = 'result/train_cd.json') -> None:
     if write_path is None:
         pass
     else:
@@ -428,9 +421,9 @@ class Sample:
                  floating_features: Iterable[Union[int, str]] = None,
                  int_features: Iterable[Union[int, str]] = None,
                  bool_features: Iterable[Union[int, str]] = None,
-                 cd_output_path: Union[str, None] = 'train_cd.json',
+                 cd_output_path: Union[str, None] = 'result/train_cd.json',
                  # if you want create encoding in Sample:
-                 encoding_output_path: Union[str, None] = 'train_encode.json'
+                 encoding_output_path: Union[str, None] = 'result/train_encode.json'
                  ) -> None:
 
         if cd is None:
@@ -459,7 +452,7 @@ class Sample:
         self.pt.fit()
         self.shape = data.shape
         self.data = self.pe.transform(data)
-        self.data = data.values.tolist()
+        self.data = self.data.values.tolist()
 
         replace_missing_values(self.data, self.shape)
 
