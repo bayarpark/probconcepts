@@ -10,6 +10,7 @@ from alg.data import PredicateTable
 class Object:
     table: Dict[int, Set[Predicate]] = None
 
+    # TODO add transform mode
     def __init__(self, data: Union[pd.Series, Dict], pt: PredicateTable = None) -> None:
         if pt is None and type(data) is dict:
             self.table = data
@@ -50,7 +51,7 @@ class Object:
                 self.table[feature] = pos_pr
 
     def rule_applicability(self, reg: Regularity) -> bool:
-        # проверяет, применимо ли правило к объекту, т.е.   #TODO  add transform mode
+        # проверяет, применимо ли правило к объекту, т.е.   #TODO add transform mode
         # reg.premise подмножество self
         for pr in reg.premise:
             if pr not in self.table[pr.ident]:
@@ -66,6 +67,9 @@ class Object:
     def delete(self, p: Predicate) -> 'Object':
         # удаляет предикат из объекта
         # first check is table contains predicate       #TODO add error
+        if p not in self.table[p.ident]:
+            raise ValueError("Attempt to delete a nonexistent predicate")
+
         self.table[p.ident].remove(p)
         new_obj = Object(deepcopy(self.table))
         new_obj.table[p.ident].remove(p)
@@ -84,7 +88,7 @@ class Object:
     def to_dict(self) -> Dict:
         if type(self.table) is dict:
             return self.table
-        else:                               # if pd.Series
+        else:  # if pd.Series
             return self.table.to_dict()
 
     def __eq__(self, other: 'Object') -> bool:
