@@ -34,7 +34,7 @@ class Regularity:
         return rule_str
 
     def writefile(self, file) -> None:
-        print(f'{str(self)} {self.prob} {self.pvalue}', file=file)
+        print(self, file=file)
 
     def is_nonnegative(self) -> bool:
         """

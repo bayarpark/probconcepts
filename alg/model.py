@@ -13,9 +13,9 @@ class BaseModel:
                  fully_depth: int = None,
                  confidence_level: float = None,
                  measure: Union[Callable[[Regularity, 'BaseModel'], Tuple[Proba, PValue]], str] = 'std',
-                 dirname: str = 'pcr') -> None:
+                 rules_write_path: str = 'pcr/') -> None:
         
-        self.dirname = dirname
+        self.dirname = rules_write_path
         self.sample = sample
         
         if fully_depth is None:
