@@ -132,12 +132,12 @@ dmypy.json
 
 
 
-.vscode
-Clasterization.ipynb
-.gitignore
 
+# vladick
+.vscode
 train_cd.json
 train_encode.json
 train_encoding.json
 
 test
+test/Tests.ipynb
