@@ -34,7 +34,7 @@ def create_cd(df: pd.DataFrame,
               floating_features: Iterable[Union[int, str]] = None,
               int_features: Iterable[Union[int, str]] = None,
               bool_features: Iterable[Union[int, str]] = None,
-              output_path: str = 'result/train_cd.json'
+              output_path: str = 'train_cd.json'
               ) -> ColumnsDescription:
     """
 
@@ -112,7 +112,7 @@ def create_cd(df: pd.DataFrame,
     return cd
 
 
-def write_cd(cd: ColumnsDescription, write_path: str = 'result/train_cd.json') -> None:
+def write_cd(cd: ColumnsDescription, write_path: str = 'train_cd.json') -> None:
     if write_path is None:
         pass
     else:
@@ -421,9 +421,9 @@ class Sample:
                  floating_features: Iterable[Union[int, str]] = None,
                  int_features: Iterable[Union[int, str]] = None,
                  bool_features: Iterable[Union[int, str]] = None,
-                 cd_output_path: Union[str, None] = 'result/train_cd.json',
+                 cd_output_path: Union[str, None] = 'train_cd.json',
                  # if you want create encoding in Sample:
-                 encoding_output_path: Union[str, None] = 'result/train_encode.json'
+                 encoding_output_path: Union[str, None] = 'train_encode.json'
                  ) -> None:
 
         if cd is None:

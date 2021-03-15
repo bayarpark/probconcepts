@@ -19,7 +19,17 @@ class Predicate:
         else:
             raise ValueError("`operation` or (`opt` and `params`) must be defined")
 
+    def __getitem__(self, x: Union[List, Iterable]) -> bool:
+        """
+        checks the satisfiability of a predicate on an object
+        (list, tuple or other object representation)
+        """
+        return self.operation(x[self.ident])
+
     def __call__(self, x: Union[int, bool, float]) -> bool:
+        """
+        checks the satisfiability of a predicate on value (int, bool or float)
+        """
         return self.operation(x)
 
     def __invert__(self) -> 'Predicate':
