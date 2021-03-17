@@ -2,7 +2,8 @@ from lang.regularity import Regularity
 from alg.model import *
 from utils.sys import makedir
 from utils.fisher import fisher_exact
-from lang.parser import compress_str
+from lang.parser import cstr
+
 # Правила строятся следующим образом (используется обход графа "в глубину"):
 # Последовательно фиксируются заключения, далее, для каждого заключения
 # запускается функция build_premise, которая
@@ -11,8 +12,8 @@ from lang.parser import compress_str
 def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
     """
 
-    :param conclusions: Предикаты в заключении
-    :param model: Модель, на которой оцениваются правила
+    :param conclusions: List of conclusions
+    :param model: model
     :return: None
     """
 
@@ -39,7 +40,7 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
                         rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule, model):
                     print(new_rule)
                     if depth == model.fully_depth - 1:
-                        print(compress_str(new_rule), file=file)
+                        print(cstr(new_rule), file=file)
                         enhance = True
                     else:
                         enhance = build_premise(new_rule, possible_lits.drop(lit), depth + 1, file) or enhance
@@ -53,12 +54,12 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
                 elif depth <= model.base_depth:
                     if rule.eval_pvalue(model) < model.confidence_level and \
                             check_proba(rule, model) and check_fisher(rule, model):
-                        print(compress_str(rule), file=file)
+                        print(cstr(rule), file=file)
                         return True
                     else:
                         return False
                 else:
-                    print(compress_str(rule), file=file)
+                    print(cstr(rule), file=file)
                     return True
             else:
                 return True
@@ -71,6 +72,10 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
 def check_proba(rule: Regularity, model: BaseModel) -> bool:
     """
     Checks the probabilities of the subrules
+
+    :param rule:
+    :param model:
+    :return:
     """
     for lit_del in rule.premise:
         subrule = Regularity(rule.conclusion, [lit for lit in rule.premise if lit != lit_del])

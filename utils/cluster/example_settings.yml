@@ -1,0 +1,39 @@
+# пример файла настроек генератора скриптов Altair PBS для кластера НГУ
+
+############### --------------------------------------- ###############
+
+# путь сохранения скриптов запуска
+path: ""
+
+pbs_settings:
+  # название задачи в qstat
+  job_name: "probconcepts"
+  # время работы одного ядра:
+  walltime: '15:00:00' # HH:MM:SS
+  # ОЗУ на одно ядро:
+  mem: '1g' # 1g, 2g, 8000m
+  # путь до workspace:
+  # о ws http://nusc.nsu.ru/wiki/doku.php/doc/ws/ws
+  workspace: "/mnt/scratch/ws/USERNAME/XXXXX"
+  # путь до питона
+  python: "lllllll"
+  # количество используемых ядер (не более 72)
+  n_cores: 20
+
+data:
+  # путь до обучающей выборки
+  sample_path: "/path/to/sample.csv"
+  # путь до ColumnDescriptor
+  cd_path: "/path/to/cd/train_cd.json"
+  # путь до PredicateEncoder (необязательно)
+  pe_path: "/path/to/pe/train_pe.json"
+
+model:
+  base_depth: 2
+  fully_depth: 150
+  confidence_level: 0.05
+  # rules_write_path: pcr/ -- к нему будет автоматически добавлен путь до workspace
+
+
+
+
