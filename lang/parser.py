@@ -17,7 +17,7 @@ def cstr(rule: Regularity) -> str:
     return rule_str
 
 
-def uncstr(filename: str,
+def decstr(filename: str,
            ctype_dict: Dict[int, str],
            min_prob: float = None,
            max_pvalue: float = None) -> List[Regularity]:
