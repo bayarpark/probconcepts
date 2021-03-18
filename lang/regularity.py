@@ -14,6 +14,7 @@ class Regularity:
     def __eq__(self, other: 'Regularity') -> bool:
         # Вообще говоря, здесь могут быть проблемы, т.к. [a,b] != [b,a],
         # поэтому нужно следить, чтобы все предикаты шли в лексикографическом порядке
+        # TODO FIX: self.concl==other.concl and len(self) = len(other) and each self premise in other premise
         return self.conclusion == other.conclusion and self.premise == other.premise
 
     def __hash__(self) -> int:

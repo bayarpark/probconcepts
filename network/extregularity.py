@@ -1,11 +1,10 @@
-from typing import List
+from typing import List, Tuple
 
 from alg.structure import Object
 from lang.predicate import Predicate
 
 
 class Conjunction:
-
     def __init__(self, predicates: List[Predicate]):
         self.predicates = predicates
 
@@ -25,27 +24,40 @@ class Conjunction:
         return True
 
 
-"""
-class ExtendRegularity:
+class ExtRegularity:
+    prob: float = None
+    pvalue: float = None
 
-    def __init__(self, Rules1, Rules2):
-        self.premise = List[Rules1]
-        self.conclusion = List[Rules2]
-        self.prob = None
-        self.pvalue = None
+    def __init__(self, conclusion, premise=None):
+        self.conclusion = conclusion
+        if premise is None:
+            self.premise = []
+        else:
+            self.premise = premise
 
     def __str__(self):
-        pass
+        rule_str = ""
+        for lit in self.premise:
+            rule_str += str(lit) + " & "
+        rule_str = rule_str[:-2] + "=> "
+
+        for lit in self.conclusion:
+            rule_str += str(lit) + " & "
+
+        rule_str = rule_str[:-2] + f" {self.prob}, {self.pvalue}"
+        return rule_str
 
     def __hash__(self):
-        pass
-
+        h = [p for p in self.premise]
+        for pr in self.conclusion:
+            h.append(pr)
+        return hash(tuple(h))
 
     def ext_premise(self, predicate):
-        pass
+        self.premise.append(predicate)
 
     def ext_conclusion(self, predicate):
-        pass
+        self.conclusion.append(predicate)
 
     def calc_prob(self, sample):
         pass
@@ -53,6 +65,18 @@ class ExtendRegularity:
     def calc_pvalue(self, sample):
         pass
 
-    def to_conjunction(self) -> Conjunction:
+    def calc_probs(self, model):
         pass
-"""
+
+    def evaluate(self, ext_model) -> Tuple[float, float]:
+        if self.prob is None or self.pvalue is None:
+            self.prob, self.pvalue = ext_model.measure(self, ext_model)
+            return self.prob, self.pvalue
+        else:
+            return self.prob, self.pvalue
+
+    def to_conjunction(self) -> Conjunction:
+        h = [p for p in self.premise]
+        for pr in self.conclusion:
+            h.append(pr)
+        return Conjunction(h)

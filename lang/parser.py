@@ -46,16 +46,16 @@ def read_premise(line, ctype_dict):
     i = 0
     premise = []
     while True:
-        id = ""
+        ident = ""
         opt = ""
         par = ""
 
         # reading id of predicate (int)
         while line[i] != ' ':
-            id += line[i]
+            ident += line[i]
             i += 1
         i += 1  # move pointer to operator
-        int_id = int(id)
+        int_id = int(ident)
 
         # reading operator of predicate (Opt)
         # =, !=, <, >, =>, <=, in
@@ -101,16 +101,16 @@ def cstr_to_predicate(int_id, str_var, opt, par):
 
 
 def read_concl(i, line, ctype_dict):
-    id = ""
+    ident = ""
     opt = ""
     par = ""
 
     # reading id of predicate (int)
     while line[i] != ' ':
-        id += line[i]
+        ident += line[i]
         i += 1
     i += 1  # move pointer to operator
-    int_id = int(id)
+    int_id = int(ident)
 
     # reading operator of predicate (Oper)
     # =, !=, <, >, =>, <=, in
