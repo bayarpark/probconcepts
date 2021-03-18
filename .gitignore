@@ -141,3 +141,5 @@ train_encoding.json
 
 test
 test/Tests.ipynb
+pcr
+Tests.ipynb
