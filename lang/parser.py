@@ -13,11 +13,11 @@ def cstr(rule: Regularity) -> str:
     rule_str = rule_str[:-1] + '@'
     rule_str += str(rule.conclusion.ident) + ' '
     rule_str += str(rule.conclusion.operation)[1:]
-    rule_str += " {} {}".format(str(rule.pvalue), str(rule.prob))
+    rule_str += " {} {}".format(str(rule.prob), str(rule.pvalue))
     return rule_str
 
 
-def uncstr(filename: str,
+def decstr(filename: str,
            ctype_dict: Dict[int, str],
            min_prob: float = None,
            max_pvalue: float = None) -> List[Regularity]:
@@ -50,7 +50,7 @@ def read_premise(line, ctype_dict):
         opt = ""
         par = ""
 
-        # reading id of predicate (int)
+        # reading ident of predicate (int)
         while line[i] != ' ':
             ident += line[i]
             i += 1
@@ -105,7 +105,7 @@ def read_concl(i, line, ctype_dict):
     opt = ""
     par = ""
 
-    # reading id of predicate (int)
+    # reading ident of predicate (int)
     while line[i] != ' ':
         ident += line[i]
         i += 1
