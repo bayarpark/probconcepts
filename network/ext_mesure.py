@@ -29,6 +29,7 @@ def ext_std_measure(rule, model) -> Tuple[Proba, PValue]:
             p = obj[lit.ident]
             if p is None:
                 concl_val_is_unknown = True
+                n = 0
                 break
             if not lit(p):
                 n = 0
