@@ -92,7 +92,7 @@ def check_fisher(rule: Regularity, model: BaseModel) -> bool:
     :params model: BaseModel object
     :return:
     """
-    is_true = lambda obj, subpremise: any(not pr[obj] for pr in subpremise)
+    is_true = lambda obj, subpremise: all(pr[obj] for pr in subpremise)
 
     for lit in rule.premise:
         subpremise = [p for p in rule.premise if p != lit]
