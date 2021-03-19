@@ -1,6 +1,6 @@
-from lang.opers import Var
-from lang.regularity import Regularity
-from lang.predicate import Predicate
+from .opers import Var
+from .regularity import Regularity
+from .predicate import Predicate
 from typing import List, Dict
 
 

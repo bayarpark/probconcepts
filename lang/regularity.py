@@ -1,4 +1,4 @@
-from lang.predicate import *
+from .predicate import *
 
 
 class Regularity:

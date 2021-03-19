@@ -1,4 +1,4 @@
-from lang.opers import *
+from .opers import *
 
 
 class Predicate:

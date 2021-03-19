@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from copy import copy
 
-from lang.opers import Eq, Neq, Var, Oper, Opers
-from lang.predicate import Predicate
-from lang.regularity import Regularity
+from ..lang.opers import Eq, Neq, Var
+from ..lang.predicate import Predicate
+from ..lang.regularity import Regularity
 
 """
 

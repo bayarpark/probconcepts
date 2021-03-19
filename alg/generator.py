@@ -1,8 +1,8 @@
-from lang.regularity import Regularity
-from alg.model import *
-from utils.sys import makedir
-from utils.fisher import fisher_exact
-from lang.parser import cstr
+from ..lang.regularity import Regularity
+from .model import *
+from ..utils.sys import makedir
+from ..utils.fisher import fisher_exact
+from ..lang.parser import cstr
 
 # Правила строятся следующим образом (используется обход графа "в глубину"):
 # Последовательно фиксируются заключения, далее, для каждого заключения
@@ -38,7 +38,6 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
                 if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
                         new_rule.eval_pvalue(model) < model.confidence_level and check_proba(new_rule, model) and \
                         rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule, model):
-                    print(new_rule)
                     if depth == model.fully_depth - 1:
                         print(cstr(new_rule), file=file)
                         enhance = True

@@ -1,6 +1,6 @@
-from alg.data import *
+from .data import *
 from typing import *
-from utils.measure import std_measure
+from ..utils.measure import std_measure
 
 PValue = NewType('PValue', float)
 Proba = NewType('Proba', float)

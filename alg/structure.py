@@ -1,10 +1,10 @@
 import pandas as pd
 from typing import *
-from lang.opers import *
-from lang.predicate import Predicate
-from lang.regularity import Regularity
+from ..lang.opers import *
+from ..lang.predicate import Predicate
+from ..lang.regularity import Regularity
 from copy import copy, deepcopy
-from alg.data import PredicateTable
+from .data import PredicateTable
 
 
 class Object:
