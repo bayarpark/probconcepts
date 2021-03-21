@@ -6,7 +6,7 @@ def makedir(path: str) -> str:
     if not path.endswith('/') or not path.endswith('\\'):
         path = path + '/'
 
-    if path.endswith('pcr/'):
+    if path.endswith('pcr/'):  ## SOME BUGS TODO
         path = f'{path[:1]} {datetime.now().strftime("%Y-%m-%d T %H h")}/'
         mkdir(path=path)
     else:

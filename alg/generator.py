@@ -36,6 +36,7 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
             for lit in possible_lits:
                 new_rule = rule.enhance(lit)
                 if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
+                        check_threshold(new_rule, rule, lit, model) and \
                         new_rule.eval_pvalue(model) < model.confidence_level and check_proba(new_rule, model) and \
                         rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule, model):
                     if depth == model.fully_depth - 1:
@@ -66,6 +67,13 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
             return False
 
     build_conclusion()
+
+
+def check_threshold(new_rule: Regularity, rule: Regularity, lit: Predicate, model: BaseModel) -> bool:
+    if lit.is_positive():
+        return True
+    else:
+        return new_rule.eval_prob(model) - rule.eval_prob(model) >= model.negative_threshold
 
 
 def check_proba(rule: Regularity, model: BaseModel) -> bool:
@@ -111,7 +119,7 @@ def check_fisher(rule: Regularity, model: BaseModel) -> bool:
                 if lit[obj]:
                     bottom += 1
 
-            crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
-            if p_value := fisher_exact(crosstab) >= model.confidence_level:
-                return False
+        crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
+        if p_value := fisher_exact(crosstab) >= model.confidence_level:
+            return False
     return True

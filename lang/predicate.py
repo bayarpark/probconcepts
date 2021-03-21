@@ -36,7 +36,7 @@ class Predicate:
         return Predicate(self.ident, self.vtype, ~self.operation)  # TODO 
 
     def __str__(self) -> str:
-        return f"<x{self.ident}{str(self.operation)}>"
+        return f"<#{self.ident}{str(self.operation)}>"
 
     def __eq__(self, other: 'Predicate') -> bool:
         return self.ident == other.ident and self.operation == other.operation and self.vtype == other.vtype

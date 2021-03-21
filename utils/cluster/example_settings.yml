@@ -32,6 +32,7 @@ model:
   base_depth: 2
   fully_depth: 150
   confidence_level: 0.05
+  negative_threshold: 0.05
   # rules_write_path: pcr/ -- к нему будет автоматически добавлен путь до workspace
 
 

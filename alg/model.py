@@ -12,6 +12,7 @@ class BaseModel:
                  base_depth: int = None,
                  fully_depth: int = None,
                  confidence_level: float = None,
+                 negative_threshold: float = None,
                  measure: Union[Callable[[Regularity, 'BaseModel'], Tuple[Proba, PValue]], str] = 'std',
                  rules_write_path: str = 'pcr/') -> None:
         
@@ -38,9 +39,17 @@ class BaseModel:
             self.confidence_level = 0.05
         else:
             if not (isinstance(confidence_level, float) and 0 <= confidence_level <= 1):
-                raise ValueError('confidence_level must be int and 0 <= confidence_level <= 1')
+                raise ValueError('confidence_level must be float and in interval [0, 1]')
             else:
                 self.confidence_level = confidence_level
+
+        if negative_threshold is None:
+            self.negative_threshold = 0.05
+        else:
+            if not (isinstance(negative_threshold, float) and 0 <= confidence_level < 1):
+                raise ValueError('negative_threshold must be float and in interval [0; 1) ')
+            else:
+                self.negative_threshold = negative_threshold
 
         if measure == 'std':
             self.measure = std_measure

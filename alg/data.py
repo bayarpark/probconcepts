@@ -19,13 +19,15 @@ from ..lang.regularity import Regularity
 
 @dataclass
 class ColumnsDescription:
-    label: int = None
-    features: Dict[str, int] = None
-    cat_features: List[int] = None
-    floating_features: List[int] = None
-    int_features: List[int] = None
-    bool_features: List[int] = None
-    type_dict: Dict[str, Var] = None
+    label: Union[str, int] = None
+    features: Dict[Union[str, int], Union[str, int]] = None
+    cat_features: List[Union[str, int]] = None
+    floating_features: List[Union[str, int]] = None
+    int_features: List[Union[str, int]] = None
+    bool_features: List[Union[str, int]] = None
+    type_dict: Dict[Union[str, int], Var] = None
+
+
 
 
 def create_cd(df: pd.DataFrame,
@@ -94,11 +96,11 @@ def create_cd(df: pd.DataFrame,
         elif floating_features is not None and col2ind[col] in floating_features:
             return 'F'
 
-    type_dict = {col: get_col_type(col) for col in df.columns}
     cat_features = to_ind(cat_features)
     floating_features = to_ind(floating_features)
     int_features = to_ind(int_features)
     bool_features = to_ind(bool_features)
+    type_dict = {col: get_col_type(col) for col in df.columns}
     cd = ColumnsDescription(label=label,
                             features=col2ind,
                             cat_features=cat_features,
@@ -127,6 +129,7 @@ def read_cd(read_path: str = 'train_cd.json') -> ColumnsDescription:
 
 class PredicateEncoder:
     encoding: Dict = None
+    inv_encoding: Dict = None
     cd: ColumnsDescription = None
 
     def __init__(self, cd: ColumnsDescription) -> None:
@@ -140,7 +143,7 @@ class PredicateEncoder:
         числовые (с плавающей точкой и целочисленные) бьет на интервалы и печатает кодировку в файл
 
         :param df: pd.DataFrame with train sample
-        :param output_path: Path to output file with columns description (if None will NOT print)
+        :param output_path: Path to output file with encoding (if None will NOT print)
         """
         if self.encoding is not None:
             pass
@@ -215,8 +218,31 @@ class PredicateEncoder:
                 with open(output_path, 'w') as out:
                     json.dump(self.encoding, out, indent=4)
 
+    def inverse_fit(self, df: pd.DataFrame = None,
+                    output_path='train_encoding.json') -> None:
+        """
+        Метод создает словарь inv_encoding обратного преобразования encoding
+
+        :param df: pd.DataFrame with train sample
+        :param output_path: Path to output file with encoding (if None will NOT print)
+        """
+
+        if self.encoding is None:
+            self.fit(df, output_path)
+
+        if self.inv_encoding is not None:
+            pass
+        else:
+            self.inv_encoding = {}
+            for feature_type, feature_encoding in self.encoding.items():
+                if feature_encoding is not None:
+                    self.inv_encoding[feature_type] = {fnum: {v: k for k, v in fenc.items()}
+                                                       for fnum, fenc in feature_encoding.items()}
+                else:
+                    self.inv_encoding[feature_type] = None
+
     def transform(self, obj: Union[
-                    pd.DataFrame, pd.Series, Predicate, Any]
+        pd.DataFrame, pd.Series, Predicate, Any]
                   ) -> Union[pd.DataFrame, pd.Series, Predicate, Any]:
 
         if isinstance(obj, pd.DataFrame):
@@ -274,12 +300,64 @@ class PredicateEncoder:
                 self.transform(obj.conclusion),
                 [self.transform(p) for p in obj.premise]
             )
+            transformed_rg.prob, transformed_rg.pvalue = obj.prob, obj.pvalue
             return transformed_rg
         else:
             raise TypeError(f'{type(obj)} type is untransformable')
 
-    def inverse_transfrom(self) -> pd.DataFrame:
-        pass
+    def inverse_transform(self, obj: Union[
+        pd.DataFrame, pd.Series, Predicate, Any]
+                  ) -> Union[pd.DataFrame, pd.Series, Predicate, Any]:
+
+        self.inverse_fit()
+        inv_cd_features = {v: k for k, v in self.cd.features.items()}
+
+        if isinstance(obj, pd.DataFrame):
+            pass  # TODO
+
+        elif isinstance(obj, pd.Series):
+            pass  # TODO
+        elif isinstance(obj, Predicate):
+            if Var.iscat(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.inv_encoding['cat_features'][obj.name][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isbin(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.inv_encoding['bool_features'][obj.name][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isint(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+
+            elif Var.isreal(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+            else:
+                raise TypeError('Unexpected type')
+
+            return transformed_pr
+        elif isinstance(obj, Regularity):
+            transformed_rg = Regularity(
+                self.inverse_transform(obj.conclusion),
+                [self.inverse_transform(p) for p in obj.premise]
+            )
+            transformed_rg.prob, transformed_rg.pvalue = obj.prob, obj.pvalue
+            return transformed_rg
+        else:
+            raise TypeError(f'{type(obj)} type is untransformable')
 
     def read_encoding(self, read_path: str = 'train_encoding.json') -> None:
         with open(read_path, 'r') as read:
@@ -459,7 +537,6 @@ class Sample:
 
 def replace_missing_values(data: List[List],
                            shape: Tuple[int, int] = None) -> None:
-
     for i in range(shape[0]):
         for j in range(shape[1]):
             if (el := data[i][j]) is pd.NA or el is np.nan:

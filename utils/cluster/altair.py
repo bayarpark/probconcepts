@@ -11,7 +11,10 @@ def make(settings='example_settings.yml'):
 
     save_path = params['path']
 
-    os.mkdir(save_path + "run")
+    try:
+        os.mkdir(save_path + "run")
+    except FileExistsError:
+        pass
 
     n_cores = params['pbs_settings']['n_cores']
     mem = params['pbs_settings']['mem']
@@ -20,9 +23,9 @@ def make(settings='example_settings.yml'):
     name = params['pbs_settings']['job_name']
     workspace = params['pbs_settings']['workspace']
 
-    with open(save_path + "run_all.sh", 'w') as f:
-        script_run_all = __make_run_script(n_cores, name)
-        print(script_run_all, file=f)
+    #with open(save_path + "run_all.sh", 'w') as f:
+    #    script_run_all = __make_run_script(n_cores, name)
+    #    print(script_run_all, file=f)
 
     for i in range(1, n_cores + 1):
         script_n = f'{name}_{i}'
@@ -43,11 +46,11 @@ done
 
 
 def __make_run_scripts_for_each(mem, walltime, name, python, script_n):
-    script = f"""# !/bin/bash
+    script = f"""#!/bin/bash
 
-# PBS -l select=1:ncups=1:mem={mem}
-# PBS -l walltime:{walltime}
-# PBS -N {name}
+#PBS -l select=1:ncpus=1:mem={mem},place=free
+#PBS -l walltime={walltime}
+#PBS -N {script_n}
 
 cd $PBS_O_WORKDIR
 {python} {script_n}.py
@@ -70,8 +73,9 @@ sample = Sample(data=df, cd=cd)
 base_depth = {md_params['base_depth']}
 fully_depth = {md_params['fully_depth']}
 confidence_level = {md_params['confidence_level']}
-conclusions_to_calc = split(list(filter(lambda x: x.is_positive(), sample.pt)), {n_cores})[{bucket}]
-model = BaseModel(sample=sample, base_depth=base_depth, fully_depth=fully_depth, confidence_level=confidence_level, rules_write_path={workspace}) 
+negative_threshold = {md_params['negative_threshold']}
+conclusions_to_calc = split(list(filter(lambda x: x.is_positive(), sample.pt)), {n_cores})[{bucket - 1}]
+model = BaseModel(sample=sample, base_depth=base_depth, fully_depth=fully_depth, confidence_level=confidence_level, negative_threshold=negative_threshold, rules_write_path='{workspace}') 
 
 build_spcr(conclusions_to_calc, model)
 """
