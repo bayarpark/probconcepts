@@ -1,5 +1,4 @@
 from .data import *
-from typing import *
 from ..utils.measure import std_measure
 
 PValue = NewType('PValue', float)

@@ -27,6 +27,8 @@ data:
   cd_path: "/path/to/cd/train_cd.json"
   # путь до PredicateEncoder (необязательно)
   pe_path: "/path/to/pe/train_pe.json"
+  # путь до файла с предикатами заключения, для которых будут строиться правила (необязательно)
+  concl_json: "/path/to/file/with/conclusions"
 
 model:
   base_depth: 2

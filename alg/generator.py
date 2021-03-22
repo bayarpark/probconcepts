@@ -1,8 +1,8 @@
-from ..lang.regularity import Regularity
 from .model import *
-from ..utils.sys import makedir
-from ..utils.fisher import fisher_exact
 from ..lang.parser import cstr
+from ..utils.fisher import fisher_exact
+from ..utils.sys import makedir
+
 
 # Правила строятся следующим образом (используется обход графа "в глубину"):
 # Последовательно фиксируются заключения, далее, для каждого заключения

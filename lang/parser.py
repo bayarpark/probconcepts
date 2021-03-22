@@ -1,7 +1,8 @@
-from .opers import Var
-from .regularity import Regularity
-from .predicate import Predicate
 from typing import List, Dict
+
+from .opers import Var
+from .predicate import Predicate
+from .regularity import Regularity
 
 
 def cstr(rule: Regularity) -> str:

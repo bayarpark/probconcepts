@@ -1,10 +1,11 @@
 from copy import copy
 from math import log as mlog
-from alg.structure import Object, FixPoint
-from lang.regularity import Regularity
-from lang.predicate import Predicate, UndefinedPredicate
-from alg.model import BaseModel
 from typing import *
+
+from alg.model import BaseModel
+from alg.structure import Object, FixPoint
+from lang.predicate import Predicate, UndefinedPredicate
+from lang.regularity import Regularity
 
 
 def krit(lits: Object, rules: List[Regularity], model: BaseModel) -> float:
@@ -84,7 +85,7 @@ def fp_explicit_with_k_rules(lits: [FixPoint], rules: List[Regularity], model: B
 
         for lit_now in lits:
             lit_now = FixPoint(lit_now)
-            lit_now.completion()
+            lit_now.completion(model.sample.pt)
 
             while True:
                 lit_next = step_operator_explicable(lit_now, rules, model, k)
@@ -102,7 +103,7 @@ def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> Set[Obj
     fix_points = set()
 
     for lit_now in lits:
-        lit_now.completion()
+        lit_now.completion(model.sample.pt)
 
         while True:
             lit_next = step_operator(lit_now, rules, model)

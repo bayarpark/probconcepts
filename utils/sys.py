@@ -1,5 +1,9 @@
-from os import mkdir
 from datetime import datetime
+from os import mkdir
+from typing import Any
+
+from numpy import nan
+from pandas import NA
 
 
 def makedir(path: str) -> str:
@@ -15,6 +19,13 @@ def makedir(path: str) -> str:
         except FileExistsError:
             pass
     return path
+
+
+def is_none(x: Any) -> bool:
+    if x is None or x is nan or x is NA:
+        return True
+    else:
+        return False
 
 
 def split(arr, buckets):

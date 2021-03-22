@@ -1,5 +1,6 @@
-from .fisher import fisher_exact
 from typing import NewType, Tuple
+
+from .fisher import fisher_exact
 
 PValue = NewType('PValue', float)
 Proba = NewType('Proba', float)
