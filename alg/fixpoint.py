@@ -2,10 +2,10 @@ from copy import copy
 from math import log as mlog
 from typing import *
 
-from alg.model import BaseModel
-from alg.structure import Object, FixPoint
-from lang.predicate import Predicate, UndefinedPredicate
-from lang.regularity import Regularity
+from .model import BaseModel
+from .structure import Object, FixPoint
+from ..lang.predicate import Predicate, UndefinedPredicate
+from ..lang.regularity import Regularity
 
 
 def krit(lits: Object, rules: List[Regularity], model: BaseModel) -> float:
@@ -47,6 +47,8 @@ def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Ob
 
     delta_add, lit_add = __delta_argmax_add(lits, applicable_concls, rules, model)
     delta_del, lit_del = __delta_argmax_del(lits, applicable_concls, rules, model)
+    print(lit_add)
+    print(lit_del)
     if krit(lits, rules, model) < krit(lits.add(lit_add), rules, model) and delta_add > delta_del and delta_add > 0:
         return lits.add(lit_add)
     elif krit(lits, rules, model) < krit(lits.delete(lit_del), rules, model) and delta_del >= delta_add and delta_del > 0:
@@ -99,8 +101,8 @@ def fp_explicit_with_k_rules(lits: [FixPoint], rules: List[Regularity], model: B
         return fix_points
 
 
-def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> Set[Object]:
-    fix_points = set()
+def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> List[Object]:
+    fix_points = []
 
     for lit_now in lits:
         lit_now.completion(model.sample.pt)
@@ -112,7 +114,8 @@ def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> Set[Obj
             lit_now = lit_next
 
         lit_now.decompletion()
-        fix_points.update({lit_now})
+        print(str(lit_now))
+        fix_points.append(lit_now)
 
     return fix_points
 

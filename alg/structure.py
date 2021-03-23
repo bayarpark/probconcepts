@@ -68,14 +68,18 @@ class Object:
         # проверяет, применимо ли правило к объекту, т.е.   #TODO add transform mode
         # reg.premise подмножество self
         for pr in reg.premise:
-            if pr not in self.table[pr.ident]:
+            if (pr_set := self.table.get(pr.ident)) is not None and pr not in pr_set:
                 return False
         return True
 
     def add(self, p: Predicate) -> 'Object':
         # добавляет предикат в объект и возвращает копию    #TODO need deepcopy?
         new_obj = Object(deepcopy(self.table))
-        new_obj.table[p.ident].add(p)
+        if (new_pr_set := new_obj.table.get(p.ident)) is not None:
+            new_pr_set.add(p)
+        else:
+            new_obj.table[p.ident] = {p}
+
         return new_obj
 
     def delete(self, p: Predicate) -> 'Object':
@@ -126,7 +130,7 @@ class Object:
 
     def __contains__(self, pr: Predicate) -> bool:
         # проверяет, содержит ли объект предикат item
-        return pr in self.table[pr.ident]
+        return pr in self.table.get(pr.ident, [])
 
     def __copy__(self) -> 'Object':
         new_obj = Object(copy(self.table))
