@@ -23,6 +23,10 @@ class Regularity:
         h.append(self.conclusion)
         return hash(tuple(h))
 
+    def hash_premise(self) -> int:
+        h = [p for p in self.premise]
+        return hash(tuple(h))
+
     def __len__(self) -> int:
         return len(self.premise)
 

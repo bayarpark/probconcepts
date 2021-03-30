@@ -53,6 +53,6 @@ def ext_std_measure(rule, model) -> Tuple[Proba, PValue]:
         return Proba(cond_prob), PValue(1.)
 
     crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
-    p_val = fisher_exact(crosstab)
+    p_val = fisher_exact(crosstab, True)
 
     return Proba(cond_prob) if top != 0. and bottom != 0. else 0., PValue(p_val)

@@ -53,6 +53,10 @@ class ExtRegularity:
             h.append(pr)
         return hash(tuple(h))
 
+    def hash_premise(self):
+        h = [p for p in self.premise]
+        return hash(tuple(h))
+
     def ext_premise(self, predicate):
         self.premise.append(predicate)
 

@@ -1,8 +1,10 @@
 from typing import List
 
 from lang.predicate import Predicate
-from network.extregularity import Conjunction
+from lang.parser import decstr
+from network.extregularity import Conjunction, ExtRegularity
 import pandas as pd
+import glob
 
 
 def conj_on_obj(obj: List, conj: Conjunction ):
@@ -31,6 +33,51 @@ def convert_sample(sample, conjs):
     return new_df
 
 
+def find_extrules(dir, model, ctype_dict):
+    # getting all rules from directory
+    all_rules = []
+    for file in glob.glob(dir+"*.txt"):
+        all_rules.extend(decstr(file, ctype_dict))
+
+    # searching for rules with the same premise
+    dict_rules = dict()
+    for rule in all_rules:
+        rule_hash = rule.hash_premise()
+        if dict_rules.get(rule_hash) is None:
+            dict_rules[rule_hash] = [rule]
+        else:
+            dict_rules[rule_hash].append(rule)
+
+    extrules = []
+    for key in dict_rules.keys():
+        base_rule = dict_rules[key][0]
+        concls = []
+        for rule in dict_rules[key]:
+            if rule.premise != base_rule.premise:
+                print("Collision found, base rule is {}, collision rule is {}".format(str(rule), str(base_rule)))
+            else:
+                concls.append(rule.conclusion)
+
+        extrule = ExtRegularity(conclusion=concls, premise=base_rule.premise)
+        extrule.evaluate(model)
+        # TODO checking for threshold
+        extrules.append(extrule)
+
+    return extrules
+
+
+def dense_layer(dir, ):
+    # reading
+
+
+    extrules = find_extrules
+
+    conjunctions = []
+    for extrule in extrules:
+        conjunctions.appen(extrule.to_conjunction())
+
+
+"""
 def find_all_extrules(dir, pt):
     all_rules = []
     for i in range(len(pt)):
@@ -42,7 +89,7 @@ def find_all_extrules(dir, pt):
 
 
 def find_extrules(rule, i, j, k):
-
+"""
 
 
 """
