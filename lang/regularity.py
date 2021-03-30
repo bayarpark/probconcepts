@@ -42,6 +42,9 @@ class Regularity:
         """
         return any(map(Predicate.is_positive, self.premise))
 
+    def is_positive(self) -> bool:
+        return all(map(Predicate.is_positive, self.premise))
+
     def enhance(self, p: Predicate) -> 'Regularity':
         new_premise = self.premise[:]
         new_premise.append(p)

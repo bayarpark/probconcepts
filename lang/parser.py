@@ -33,7 +33,7 @@ def decstr(filename: str,
             rule = Regularity(concl)
             rule.premise = premise
 
-            if min_prob is not None and max_pvalue is not None and prob < min_prob and pvalue > max_pvalue:
+            if (min_prob is not None and prob < min_prob) or (max_pvalue is not None and pvalue > max_pvalue):
                 continue
             else:
                 rule.prob = prob

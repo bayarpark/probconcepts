@@ -358,7 +358,10 @@ class PredicateEncoder:
             transformed_rg.prob, transformed_rg.pvalue = obj.prob, obj.pvalue
             return transformed_rg
         else:
-            raise TypeError(f'{type(obj)} type is untransformable')
+            try:
+                return obj.__inverse_transform__(self)
+            except AttributeError:
+                raise TypeError(f'{type(obj)} type is untransformable')
 
     def read_encoding(self, read_path: str = 'train_encoding.json') -> None:
         with open(read_path, 'r') as read:

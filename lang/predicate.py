@@ -56,7 +56,7 @@ class Predicate:
 
     def is_positive(self) -> bool:
         if self.vtype == Var.Bool and isinstance(self.operation, Eq):
-            return self.operation.params
+            return True
         else:
             return self.operation.is_positive()
 

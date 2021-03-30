@@ -57,12 +57,16 @@ class Object:
 
     def decompletion(self) -> None:
         # delete all neg predicates
+        new_table = {}
         for feature in self.table.keys():
             pos_pr = set()
             for pr in self.table[feature]:
                 if pr.is_positive() or pr.vtype == Var.Bool:
                     pos_pr.add(pr)
-                self.table[feature] = pos_pr
+            if len(pos_pr) != 0:
+                new_table[feature] = pos_pr
+
+        self.table = new_table
 
     def rule_applicability(self, reg: Regularity) -> bool:
         # проверяет, применимо ли правило к объекту, т.е.   #TODO add transform mode
@@ -100,20 +104,20 @@ class Object:
 
     @staticmethod
     def from_dict(new_dict: Dict[str, Set[Predicate]]) -> 'Object':
-        return Object(data=new_dict)
+        return Object(data={k: set(map(lambda x: Predicate.from_dict(x), v)) for k, v in new_dict.items()})
 
     def to_dict(self) -> Dict:
         if isinstance(self.table, dict):
-            return self.table
+            return {k: list(map(lambda x: x.to_dict(), v)) for k, v in self.table.items()}
         else:  # if pd.Series
             return self.table.to_dict()
+
+    def __inverse_transform__(self, pe) -> 'Object':
+        return Object(data={k: set(map(pe.inverse_transform, v)) for k, v in self.table.items()})
 
     def __eq__(self, other: 'Object') -> bool:
         return self.table == other.table
 
-    def __hash__(self) -> int:
-        pass
-        # return hash(self.table) can't hash dict[int : set]
 
     def __len__(self) -> int:
         # возвращает число предикатов в объекте
