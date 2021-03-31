@@ -7,7 +7,7 @@ import pandas as pd
 import glob
 
 
-def conj_on_obj(obj: List, conj: Conjunction ):
+def conj_on_obj(obj: List, conj: Conjunction):
     for pr in conj.predicates:
         if obj[pr.ident] is None:
             return None
@@ -59,23 +59,22 @@ def find_extrules(dir, model, ctype_dict):
                 concls.append(rule.conclusion)
 
         extrule = ExtRegularity(conclusion=concls, premise=base_rule.premise)
-        extrule.evaluate(model)
+       # extrule.evaluate(model)
         # TODO checking for threshold
         extrules.append(extrule)
 
     return extrules
 
-
-def dense_layer(dir, ):
+"""
+def dense_layer(dir):
     # reading
-
 
     extrules = find_extrules
 
     conjunctions = []
     for extrule in extrules:
         conjunctions.appen(extrule.to_conjunction())
-
+"""
 
 """
 def find_all_extrules(dir, pt):

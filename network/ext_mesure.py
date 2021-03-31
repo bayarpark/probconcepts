@@ -6,43 +6,46 @@ Proba = NewType('Proba', float)
 
 
 def ext_std_measure(rule, model) -> Tuple[Proba, PValue]:
-    top = 0
-    bottom = 0
-    cons_count = 0
-    all_sum = 0
+                        # P(A|B) = P(A&B) / P(B) A-premise, B-conclusion
+    top = 0             # num obj where A&B is true
+    bottom = 0          # num obj where A is true
+    cons_count = 0      # num obj where B is true
+    all_sum = 0         # num obj where all features is not None
     for obj in model.sample.data:
-        d, n = 1, 1
-        prem_val_is_unknown = False
+        d, n = 1, 1     # n = A&B is true on obj, d = A is true on obj
+        prem_is_unknown = False
+        concl_is_unknown = False
+
+        # checking premise
         for lit in rule.premise:
             p = obj[lit.ident]
             if p is None:
-                prem_val_is_unknown = True
+                prem_is_unknown = True
+                break
+            if d != 0 and not lit(p):
                 d = 0
-                break
-            if not lit(p):
-                d = 0
-                break
 
-        concl_true = True
-        concl_val_is_unknown = False
-        for lit in rule.conclusion:
-            p = obj[lit.ident]
-            if p is None:
-                concl_val_is_unknown = True
-                n = 0
-                break
-            if not lit(p):
-                n = 0
-                concl_true = False
-                break
+        # checking conclusion
+        if prem_is_unknown:
+            d, n = 0, 0
+        else:
+            c = 1  # conclusion is True
+            for lit in rule.conclusion:
+                p = obj[lit.ident]
+                if p is None:
+                    concl_is_unknown = True
+                    break
+                if c!=0 and  not lit(p):
+                    c = 0
 
-        if not concl_val_is_unknown and not prem_val_is_unknown:
-            all_sum += 1
-            if concl_true:
-                cons_count += 1
+            if concl_is_unknown:
+                d, n = 0, 0
+            else:
+                all_sum += 1
+                cons_count += c
+                if c == 0 or d == 0:
+                    n = 0
 
-            if d == 0 or not concl_true:
-                n = 0
         top += n
         bottom += d
 
@@ -53,6 +56,7 @@ def ext_std_measure(rule, model) -> Tuple[Proba, PValue]:
         return Proba(cond_prob), PValue(1.)
 
     crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
-    p_val = fisher_exact(crosstab, True)
+
+    p_val = fisher_exact(crosstab)
 
     return Proba(cond_prob) if top != 0. and bottom != 0. else 0., PValue(p_val)

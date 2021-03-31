@@ -140,6 +140,9 @@ train_encode.json
 train_encoding.json
 
 test
-test/Tests.ipynb
 pcr
-Tests.ipynb
+
+*.ipynb
+depth2
+exp_mushr
+exp_titanic
