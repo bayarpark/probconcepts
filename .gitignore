@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .idea/
+test/inttest/
 
 # C extensions
 *.so
@@ -131,8 +132,6 @@ dmypy.json
 .pyre/
 
 
-
-
 # vladick
 .vscode
 train_cd.json
@@ -140,9 +139,17 @@ train_encode.json
 train_encoding.json
 
 test
+<<<<<<< HEAD
 pcr
 
 *.ipynb
 depth2
 exp_mushr
 exp_titanic
+=======
+test/Tests.ipynb
+*.ipynb
+depth2
+exp_mushr
+exp_titanic
+>>>>>>>in

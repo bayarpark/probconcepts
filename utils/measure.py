@@ -1,6 +1,7 @@
-from utils.fisher import fisher_exact
 from typing import NewType, Tuple
 from network.extregularity import ExtRegularity
+
+from .fisher import fisher_exact
 
 PValue = NewType('PValue', float)
 Proba = NewType('Proba', float)
@@ -19,7 +20,7 @@ def std_measure(rule: ExtRegularity, model) -> Tuple[Proba, PValue]:
             if p is None:
                 val_is_unknown = True
                 break
-            if not lit(p):
+            if d != 0 and not lit(p):
                 d = 0
         p = obj[rule.conclusion.ident]
         if val_is_unknown or p is None:

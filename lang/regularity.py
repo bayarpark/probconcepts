@@ -1,4 +1,4 @@
-from lang.predicate import *
+from .predicate import *
 
 
 class Regularity:
@@ -46,6 +46,9 @@ class Regularity:
         Проверяет, что в посылке правила есть хотя бы один позитивный предикат
         """
         return any(map(Predicate.is_positive, self.premise))
+
+    def is_positive(self) -> bool:
+        return all(map(Predicate.is_positive, self.premise))
 
     def enhance(self, p: Predicate) -> 'Regularity':
         new_premise = self.premise[:]

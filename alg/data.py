@@ -1,14 +1,15 @@
 import json
+from copy import copy
 from copy import deepcopy
 from dataclasses import dataclass, asdict
 from typing import *
+
 import numpy as np
 import pandas as pd
-from copy import copy
 
-from lang.opers import Eq, Neq, Var, Oper, Opers
-from lang.predicate import Predicate
-from lang.regularity import Regularity
+from ..lang.opers import Eq, Neq, Var
+from ..lang.predicate import Predicate
+from ..lang.regularity import Regularity
 
 """
 
@@ -19,13 +20,15 @@ from lang.regularity import Regularity
 
 @dataclass
 class ColumnsDescription:
-    label: int = None
-    features: Dict[str, int] = None
-    cat_features: List[int] = None
-    floating_features: List[int] = None
-    int_features: List[int] = None
-    bool_features: List[int] = None
-    type_dict: Dict[str, Var] = None
+    label: Union[str, int] = None
+    features: Dict[Union[str, int], Union[str, int]] = None
+    cat_features: List[Union[str, int]] = None
+    floating_features: List[Union[str, int]] = None
+    int_features: List[Union[str, int]] = None
+    bool_features: List[Union[str, int]] = None
+    type_dict: Dict[Union[str, int], Var] = None
+
+
 
 
 def create_cd(df: pd.DataFrame,
@@ -34,7 +37,7 @@ def create_cd(df: pd.DataFrame,
               floating_features: Iterable[Union[int, str]] = None,
               int_features: Iterable[Union[int, str]] = None,
               bool_features: Iterable[Union[int, str]] = None,
-              output_path: str = 'result/train_cd.json'
+              output_path: str = 'train_cd.json'
               ) -> ColumnsDescription:
     """
 
@@ -85,20 +88,20 @@ def create_cd(df: pd.DataFrame,
         pass
 
     def get_col_type(col: str) -> str:
-        if col2ind[col] in bool_features:
+        if bool_features is not None and col2ind[col] in bool_features:
             return 'B'
-        elif col2ind[col] in cat_features:
+        elif cat_features is not None and col2ind[col] in cat_features:
             return 'C'
-        elif col2ind[col] in int_features:
+        elif int_features is not None and col2ind[col] in int_features:
             return 'I'
-        elif col2ind[col] in floating_features:
+        elif floating_features is not None and col2ind[col] in floating_features:
             return 'F'
 
-    type_dict = {col: get_col_type(col) for col in df.columns}
     cat_features = to_ind(cat_features)
     floating_features = to_ind(floating_features)
     int_features = to_ind(int_features)
     bool_features = to_ind(bool_features)
+    type_dict = {col: get_col_type(col) for col in df.columns}
     cd = ColumnsDescription(label=label,
                             features=col2ind,
                             cat_features=cat_features,
@@ -112,7 +115,7 @@ def create_cd(df: pd.DataFrame,
     return cd
 
 
-def write_cd(cd: ColumnsDescription, write_path: str = 'result/train_cd.json') -> None:
+def write_cd(cd: ColumnsDescription, write_path: str = 'train_cd.json') -> None:
     if write_path is None:
         pass
     else:
@@ -127,6 +130,7 @@ def read_cd(read_path: str = 'train_cd.json') -> ColumnsDescription:
 
 class PredicateEncoder:
     encoding: Dict = None
+    inv_encoding: Dict = None
     cd: ColumnsDescription = None
 
     def __init__(self, cd: ColumnsDescription) -> None:
@@ -140,7 +144,7 @@ class PredicateEncoder:
         числовые (с плавающей точкой и целочисленные) бьет на интервалы и печатает кодировку в файл
 
         :param df: pd.DataFrame with train sample
-        :param output_path: Path to output file with columns description (if None will NOT print)
+        :param output_path: Path to output file with encoding (if None will NOT print)
         """
         if self.encoding is not None:
             pass
@@ -215,8 +219,31 @@ class PredicateEncoder:
                 with open(output_path, 'w') as out:
                     json.dump(self.encoding, out, indent=4)
 
+    def inverse_fit(self, df: pd.DataFrame = None,
+                    output_path='train_encoding.json') -> None:
+        """
+        Метод создает словарь inv_encoding обратного преобразования encoding
+
+        :param df: pd.DataFrame with train sample
+        :param output_path: Path to output file with encoding (if None will NOT print)
+        """
+
+        if self.encoding is None:
+            self.fit(df, output_path)
+
+        if self.inv_encoding is not None:
+            pass
+        else:
+            self.inv_encoding = {}
+            for feature_type, feature_encoding in self.encoding.items():
+                if feature_encoding is not None:
+                    self.inv_encoding[feature_type] = {fnum: {v: k for k, v in fenc.items()}
+                                                       for fnum, fenc in feature_encoding.items()}
+                else:
+                    self.inv_encoding[feature_type] = None
+
     def transform(self, obj: Union[
-                    pd.DataFrame, pd.Series, Predicate, Any]
+        pd.DataFrame, pd.Series, Predicate, Any]
                   ) -> Union[pd.DataFrame, pd.Series, Predicate, Any]:
 
         if isinstance(obj, pd.DataFrame):
@@ -274,12 +301,67 @@ class PredicateEncoder:
                 self.transform(obj.conclusion),
                 [self.transform(p) for p in obj.premise]
             )
+            transformed_rg.prob, transformed_rg.pvalue = obj.prob, obj.pvalue
             return transformed_rg
         else:
             raise TypeError(f'{type(obj)} type is untransformable')
 
-    def inverse_transfrom(self) -> pd.DataFrame:
-        pass
+    def inverse_transform(self, obj: Union[
+        pd.DataFrame, pd.Series, Predicate, Any]
+                  ) -> Union[pd.DataFrame, pd.Series, Predicate, Any]:
+
+        self.inverse_fit()
+        inv_cd_features = {v: k for k, v in self.cd.features.items()}
+
+        if isinstance(obj, pd.DataFrame):
+            pass  # TODO
+
+        elif isinstance(obj, pd.Series):
+            pass  # TODO
+        elif isinstance(obj, Predicate):
+            if Var.iscat(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.inv_encoding['cat_features'][obj.name][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isbin(obj.vtype):
+                tmp_op = copy(obj.operation)
+                tmp_op.params = self.inv_encoding['bool_features'][obj.name][obj.operation.params]
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=tmp_op)
+
+            elif Var.isint(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+
+            elif Var.isreal(obj.vtype):
+                transformed_pr = Predicate(
+                    ident=inv_cd_features[obj.name],
+                    vtype=obj.vtype,
+                    operation=obj.operation)
+            else:
+                raise TypeError('Unexpected type')
+
+            return transformed_pr
+        elif isinstance(obj, Regularity):
+            transformed_rg = Regularity(
+                self.inverse_transform(obj.conclusion),
+                [self.inverse_transform(p) for p in obj.premise]
+            )
+            transformed_rg.prob, transformed_rg.pvalue = obj.prob, obj.pvalue
+            return transformed_rg
+        else:
+            try:
+                return obj.__inverse_transform__(self)
+            except AttributeError:
+                raise TypeError(f'{type(obj)} type is untransformable')
 
     def read_encoding(self, read_path: str = 'train_encoding.json') -> None:
         with open(read_path, 'r') as read:
@@ -306,7 +388,7 @@ class PredicateTable:
             for k_used in range(len(v_used := self.used_predicate[k])):
                 if v_used[k_used][0]:
                     yield self.table[k][k_used][0]
-                elif v_used[k_used][1]:
+                if v_used[k_used][1]:
                     yield self.table[k][k_used][1]
 
     def init(self, p: Predicate) -> 'PredicateTable':
@@ -318,7 +400,7 @@ class PredicateTable:
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
         for k in range(len(lp := new_pe.table[p.ident])):
-            if p == lp[k][0] or p == lp[k][0]:
+            if p == lp[k][0] or p == lp[k][1]:
                 new_pe.used_predicate[p.ident][k][0] = False
                 new_pe.used_predicate[p.ident][k][1] = False
 
@@ -335,20 +417,20 @@ class PredicateTable:
         new_pe.table = self.table
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
-        if p.is_positive():
-            for k in range(len(upr := new_pe.used_predicate[p.ident])):
-                if p != new_pe.table[p.ident][k][0]:
-                    upr[k][0] = False
-                else:
-                    upr[k][0] = False
-                    upr[k][1] = False
-        else:
-            for k in range(len(upr := new_pe.used_predicate[p.ident])):
-                if new_pe.table[p.ident][k][1] == p:
-                    upr[k][1] = False
-                    upr[k][0] = False
+        new_pe.used_predicate = PredicateTable.__do_lex_drop(new_pe.used_predicate, p)
+        for k in range(len(upr := new_pe.used_predicate[p.ident])):
+            upr[k][0] = False
+            upr[k][1] = False
+            if new_pe.table[p.ident][k][1] == p or new_pe.table[p.ident][k][0] == p:
+                break
 
         return new_pe
+
+    @staticmethod
+    def __do_lex_drop(used_predicate: Dict[int, List[List[bool]]], p: Predicate) -> Dict:
+        for k in range(p.ident):
+            used_predicate[k] = list(map(lambda _: [False, False], used_predicate[k]))
+        return used_predicate
 
     def fit(self) -> None:
 
@@ -421,9 +503,9 @@ class Sample:
                  floating_features: Iterable[Union[int, str]] = None,
                  int_features: Iterable[Union[int, str]] = None,
                  bool_features: Iterable[Union[int, str]] = None,
-                 cd_output_path: Union[str, None] = 'result/train_cd.json',
+                 cd_output_path: Union[str, None] = 'train_cd.json',
                  # if you want create encoding in Sample:
-                 encoding_output_path: Union[str, None] = 'result/train_encode.json'
+                 encoding_output_path: Union[str, None] = 'train_encode.json'
                  ) -> None:
 
         if cd is None:
@@ -459,7 +541,6 @@ class Sample:
 
 def replace_missing_values(data: List[List],
                            shape: Tuple[int, int] = None) -> None:
-
     for i in range(shape[0]):
         for j in range(shape[1]):
             if (el := data[i][j]) is pd.NA or el is np.nan:

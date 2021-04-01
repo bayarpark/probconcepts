@@ -1,4 +1,4 @@
-from lang.opers import *
+from .opers import *
 
 
 class Predicate:
@@ -19,14 +19,24 @@ class Predicate:
         else:
             raise ValueError("`operation` or (`opt` and `params`) must be defined")
 
+    def __getitem__(self, x: Union[List, Iterable]) -> bool:
+        """
+        checks the satisfiability of a predicate on an object
+        (list, tuple or other object representation)
+        """
+        return self.operation(x[self.ident])
+
     def __call__(self, x: Union[int, bool, float]) -> bool:
+        """
+        checks the satisfiability of a predicate on value (int, bool or float)
+        """
         return self.operation(x)
 
     def __invert__(self) -> 'Predicate':
         return Predicate(self.ident, self.vtype, ~self.operation)  # TODO 
 
     def __str__(self) -> str:
-        return f"<x{self.ident}{str(self.operation)}>"
+        return f"<#{self.ident}{str(self.operation)}>"
 
     def __eq__(self, other: 'Predicate') -> bool:
         return self.ident == other.ident and self.operation == other.operation and self.vtype == other.vtype
@@ -46,7 +56,7 @@ class Predicate:
 
     def is_positive(self) -> bool:
         if self.vtype == Var.Bool and isinstance(self.operation, Eq):
-            return self.operation.params
+            return True
         else:
             return self.operation.is_positive()
 
