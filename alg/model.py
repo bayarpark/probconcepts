@@ -43,7 +43,7 @@ class BaseModel:
                 self.confidence_level = confidence_level
 
         if negative_threshold is None:
-            self.negative_threshold = 0.05
+            self.negative_threshold = 0
         else:
             if not (isinstance(negative_threshold, float) and 0 <= confidence_level < 1):
                 raise ValueError('negative_threshold must be float and in interval [0; 1) ')

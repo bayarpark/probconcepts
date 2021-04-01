@@ -26,9 +26,6 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
             with open(f"{path}spcr_{str(lit)}.txt", "w") as f:
                 build_premise(Regularity(lit), poss_lits, 0, f)
 
-            with open(f"{path}spcr_{str(~lit)}.txt", "w") as f:
-                build_premise(Regularity(~lit), poss_lits, 0, f)
-
     # Наращивание посылки
     def build_premise(rule: Regularity, possible_lits: PredicateTable, depth: int, file) -> bool:
         if depth < model.fully_depth:

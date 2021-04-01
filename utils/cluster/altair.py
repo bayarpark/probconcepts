@@ -152,7 +152,7 @@ base_depth = {md_params['base_depth']}
 fully_depth = {md_params['fully_depth']}
 confidence_level = {md_params['confidence_level']}
 negative_threshold = {md_params['negative_threshold']}
-conclusions_to_calc = split(list(filter(lambda x: x.is_positive(), sample.pt)), {n_cores})[{bucket - 1}]
+conclusions_to_calc = split(list(sample.pt), {n_cores})[{bucket - 1}]
 model = BaseModel(sample=sample, base_depth=base_depth, fully_depth=fully_depth, confidence_level=confidence_level, negative_threshold=negative_threshold, rules_write_path='{workspace}') 
 
 build_spcr(conclusions_to_calc, model)
