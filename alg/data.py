@@ -400,7 +400,7 @@ class PredicateTable:
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
         for k in range(len(lp := new_pe.table[p.ident])):
-            if p == lp[k][0] or p == lp[k][0]:
+            if p == lp[k][0] or p == lp[k][1]:
                 new_pe.used_predicate[p.ident][k][0] = False
                 new_pe.used_predicate[p.ident][k][1] = False
 
@@ -417,20 +417,20 @@ class PredicateTable:
         new_pe.table = self.table
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
-        if p.is_positive():
-            for k in range(len(upr := new_pe.used_predicate[p.ident])):
-                if p != new_pe.table[p.ident][k][0]:
-                    upr[k][0] = False
-                else:
-                    upr[k][0] = False
-                    upr[k][1] = False
-        else:
-            for k in range(len(upr := new_pe.used_predicate[p.ident])):
-                if new_pe.table[p.ident][k][1] == p:
-                    upr[k][1] = False
-                    upr[k][0] = False
+        new_pe.used_predicate = PredicateTable.__do_lex_drop(new_pe.used_predicate, p)
+        for k in range(len(upr := new_pe.used_predicate[p.ident])):
+            upr[k][0] = False
+            upr[k][1] = False
+            if new_pe.table[p.ident][k][1] == p or new_pe.table[p.ident][k][0] == p:
+                break
 
         return new_pe
+
+    @staticmethod
+    def __do_lex_drop(used_predicate: Dict[int, List[List[bool]]], p: Predicate) -> Dict:
+        for k in range(p.ident):
+            used_predicate[k] = list(map(lambda _: [False, False], used_predicate[k]))
+        return used_predicate
 
     def fit(self) -> None:
 

@@ -19,11 +19,17 @@ class Object:
             self.table = data
         else:
             self.pt = pt
-            self.table = {pt.pe.cd.features[col]: {pt.pe.transform(Predicate(col,
-                                                                             vtype=Var(pt.pe.cd.type_dict[col]),
-                                                                             opt='=',
-                                                                             params=data[col]))} for col in data.keys()
-                          if not is_none(data[col])}
+            self.table = {
+                pt.pe.cd.features[col]: {
+                    pt.pe.transform(
+                        Predicate(col,
+                                  vtype=Var(pt.pe.cd.type_dict[col]),
+                                  opt='=',
+                                  params=data[col]
+                                  )
+                    )
+                } for col in data.keys() if not is_none(data[col])
+            }
 
     def __iter__(self) -> Iterator:
         for k, v in self.table.items():
@@ -117,7 +123,6 @@ class Object:
 
     def __eq__(self, other: 'Object') -> bool:
         return self.table == other.table
-
 
     def __len__(self) -> int:
         # возвращает число предикатов в объекте
