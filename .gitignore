@@ -139,17 +139,11 @@ train_encode.json
 train_encoding.json
 
 test
-<<<<<<< HEAD
 pcr
-
-*.ipynb
-depth2
-exp_mushr
-exp_titanic
-=======
 test/Tests.ipynb
+
+exp1
 *.ipynb
 depth2
 exp_mushr
 exp_titanic
->>>>>>>in

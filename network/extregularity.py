@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
-from alg.structure import Object
-from lang.predicate import Predicate
+from ..alg.structure import Object
+from ..lang.predicate import Predicate
 
 
 class Conjunction:

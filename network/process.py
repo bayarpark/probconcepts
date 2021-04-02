@@ -1,8 +1,8 @@
 from typing import List
 
-from lang.predicate import Predicate
-from lang.parser import decstr
-from network.extregularity import Conjunction, ExtRegularity
+from ..lang.predicate import Predicate
+from ..lang.parser import decstr
+from .extregularity import Conjunction, ExtRegularity
 import pandas as pd
 import glob
 

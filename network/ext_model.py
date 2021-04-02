@@ -1,6 +1,7 @@
-from alg.data import *
 from typing import *
-from network.ext_mesure import ext_std_measure
+
+from ..alg.data import *
+from .ext_mesure import ext_std_measure
 
 PValue = NewType('PValue', float)
 Proba = NewType('Proba', float)

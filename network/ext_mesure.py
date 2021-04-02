@@ -1,4 +1,4 @@
-from utils.fisher import fisher_exact
+from ..utils.fisher import fisher_exact
 from typing import NewType, Tuple
 
 PValue = NewType('PValue', float)

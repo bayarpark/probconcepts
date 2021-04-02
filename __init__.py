@@ -1,6 +1,7 @@
 from . import alg
 from . import lang
 from . import utils
+from . import network
 
 # algorithms
 from .alg.data import \

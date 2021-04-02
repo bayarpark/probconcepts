@@ -1,5 +1,4 @@
 from typing import NewType, Tuple
-from network.extregularity import ExtRegularity
 
 from .fisher import fisher_exact
 
@@ -7,7 +6,7 @@ PValue = NewType('PValue', float)
 Proba = NewType('Proba', float)
 
 
-def std_measure(rule: ExtRegularity, model) -> Tuple[Proba, PValue]:
+def std_measure(rule, model) -> Tuple[Proba, PValue]:
     top = 0
     bottom = 0
     cons_count = 0
