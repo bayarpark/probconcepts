@@ -478,6 +478,9 @@ class PredicateTable:
         # create a special table for using flags
         self.used_predicate = {k: [[True, True] for _ in range(len(self.table[k]))] for k in self.table.keys()}
 
+    def __str__(self):
+        return str({k: list(map(lambda x: list(map(str, x)), v))for k, v in self.table.items()})
+
 
 """
 
