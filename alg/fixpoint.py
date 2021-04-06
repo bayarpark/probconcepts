@@ -1,12 +1,17 @@
 from copy import copy
 from math import log as mlog
 from typing import *
+import yaml
+
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 from .model import BaseModel
 from .structure import Object, FixPoint
 from ..lang.predicate import Predicate, UndefinedPredicate
 from ..lang.regularity import Regularity
-import json
 
 
 def consistency(lits: Object, rules: List[Regularity], md: BaseModel) -> float:
@@ -38,102 +43,190 @@ def consistency_add(lits: Object, lit: Predicate, rules: List[Regularity], md: B
     return measure
 
 
-def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Object:
+def step_operator(lits: Object,
+                  rules: List[Regularity],
+                  model: BaseModel,
+                  alternative_choose: bool,
+                  logging: bool) -> Object:
 
-    delta_add, lit_add = __delta_argmax_add_spec(lits, rules, model)
+    spec_delta_add, spec_lit_add = __delta_argmax_add_spec(lits, rules, model)
     delta_del, lit_del = __delta_argmax_del(lits, rules, model)
-    print(delta_add, lit_add)
-    print(delta_del, lit_del)
-    print('---------^^^^^^^^^---------')
 
-    if (consistency_lits := consistency(lits, rules, model)) < consistency(lits.add(lit_add), rules, model) and\
-            delta_add > delta_del and delta_add > 0:
+    consistency_lits = consistency(lits, rules, model)
+    if spec_delta_add > 0 and spec_delta_add > delta_del and \
+            consistency_lits < consistency(lits.add(spec_lit_add), rules, model):
 
-        return lits.add(lit_add)
+        if logging:
+            print(' # ---- STEP COMPLETED ---- # ')
+            print(f'ADDED SPEC: {spec_lit_add} with DELTA: {spec_delta_add}')
+            print(f'ALTERNATIVE: {lit_del} with DELTA: {delta_del}')
+
+        return lits.add(spec_lit_add)
     else:
-        delta_add, lit_add = __delta_argmax_add(lits, rules, model)
-        if consistency_lits < consistency(lits.add(lit_add), rules, model) and \
-                delta_add > delta_del and delta_add > 0:
+        if alternative_choose:
+            delta_add, lit_add = __delta_argmax_add(lits, rules, model)
+        if alternative_choose and \
+                delta_add > 0 and delta_add > delta_del and \
+                consistency_lits < consistency(lits.add(lit_add), rules, model):
+
+            if logging:
+                print(' # ---- STEP COMPLETED ---- # ')
+                print(f'ADDED ALT: {lit_add} with DELTA: {delta_add}')
+                print(f'ALTERNATIVE: {lit_del} wit DELTA: {delta_del}')
+
             return lits.add(lit_add)
-        elif consistency_lits < consistency(lits.delete(lit_del), rules, model) and\
-                delta_del > 0:
+        elif delta_del > 0 and consistency_lits < consistency(lits.delete(lit_del), rules, model):
+
+            if logging:
+                print(' # ---- STEP COMPLETED ---- # ')
+                print(f'DELETED: {lit_del} with DELTA: {delta_del}')
+                print(f'ALTERNATIVE SPEC: {spec_lit_add} with DELTA: {spec_delta_add}')
+
+                if alternative_choose:
+                    print(f'ALTERNATIVE ALT: {lit_add} with DELTA: {delta_add}')
 
             return lits.delete(lit_del)
 
         else:
+            if logging:
+                print(' # ---- STEP COMPLETED ---- # ')
+                print('NO LITERALS ADDED OR DELETED')
             return copy(lits)
 
 
-def fp(lits: List[Object], rules: List[Regularity], model: BaseModel, writename) -> List[Object]:
-    with open(writename, 'w') as f:
-        fix_points = []
+def fix_points(lits: List[Object],
+               rules: List[Regularity],
+               model: BaseModel,
+               write_path: str = None,
+               alternative_choose: bool = False,
+               logging: bool = False) -> Union[None, List[Object]]:
+    if write_path is None:
+        return __find_fix_points_and_return(lits, rules, model, alternative_choose, logging)
+    else:
+        __find_fix_points_on_air(lits, rules, model, write_path, alternative_choose)
 
-        for lit_now in lits:
-            lit_now.completion(model.sample.pt)
 
-            while True:
-                lit_next = step_operator(lit_now, rules, model)
-                if lit_now == lit_next:
-                    break
-                lit_now = lit_next
+def __find_fix_points_and_return(lits: List[Object],
+                                 rules: List[Regularity],
+                                 model: BaseModel,
+                                 alternative_choose: bool = False,
+                                 logging: bool = False) -> List[Object]:
+    fix_points = []
 
-            lit_now.decompletion()
-            fix_points.append(lit_now)
+    for lit_now in lits:
+        lit_now.completion(model.sample.pt)
+
+        print('# ==== STARTING IDEALIZING A NEW OBJECT ==== #')
+        while True:
+            lit_next = step_operator(lit_now, rules, model, alternative_choose, logging)
+            if lit_now == lit_next:
+                break
+            lit_now = lit_next
+
+        fix_points.append(lit_now)
 
     return fix_points
 
 
-# Далее идут чисто технические функции
+def __find_fix_points_on_air(lits: List[Object],
+                             rules: List[Regularity],
+                             model: BaseModel,
+                             write_path: str = None,
+                             alternative_choose: bool = False) -> None:
+    with open(write_path, 'w') as f:
+        for lit_now in lits:
+            lit_now.completion(model.sample.pt)
 
-def __delta_argmax_add(lits: Object, rules: List[Regularity], model: BaseModel) \
-        -> Tuple[float, Predicate]:
-    # Функция ищет максимальное изменение критерия при добавлении предиката
+            while True:
+                lit_next = step_operator(lit_now, rules, model, alternative_choose, False)
+                if lit_now == lit_next:
+                    break
+                lit_now = lit_next
+
+            print(yaml.dump([lit_now.to_dict()], Dumper=Dumper), file=f)
+
+
+def __delta_argmax_add(lits: Object,
+                       rules: List[Regularity],
+                       model: BaseModel) -> Tuple[float, Predicate]:
+
+    literals_to_add = set(
+        rule.conclusion for rule in rules if lits.rule_applicability(rule) and rule.conclusion not in lits
+    )
     argmax = UndefinedPredicate()
-    applicable_concls = set(r.conclusion for r in rules if lits.rule_applicability(r) and r.conclusion not in lits)
-    consistency_lits, consistencymax_delta, consistencymax_arg, kr = .0, .0, .0, .0
-    for lit in applicable_concls:
-        consistency_lits = consistency(lits, rules, model)
-        kr = consistency(lits.add(lit), rules, model) - consistency_lits
-        if kr > consistencymax_delta:
-            consistencymax_delta = kr
-        if kr + consistency_lits > consistencymax_arg:
-            consistencymax_arg = kr + consistency_lits
-            argmax = lit
-    return consistencymax_delta, argmax
+    max_delta_consistency = .0
+    max_consistency_added = .0
 
-
-def __delta_argmax_add_spec(lits: Object, rules: List[Regularity], model: BaseModel) \
-        -> Tuple[float, Predicate]:
-    # Функция ищет максимальное изменение критерия при добавлении предиката
-    argmax = UndefinedPredicate()
-    applicable_concls = set(r.conclusion for r in rules if lits.rule_applicability(r) and r.conclusion not in lits)
-    consistency_lits, consistencymax_delta, consistencymax_arg, kr = .0, .0, .0, .0
-    for lit in applicable_concls:
-        consistency_lits = consistency_add(lits, lit, rules, model)
-        kr = consistency_add(lits.add(lit), lit, rules, model) - consistency_lits
-        if kr > consistencymax_delta:
-            consistencymax_delta = kr
-        if kr + consistency_lits > consistencymax_arg:
-            consistencymax_arg = kr + consistency_lits
-            argmax = lit
-    return consistencymax_delta, argmax
-
-
-def __delta_argmax_del(lits: Object, rules: List[Regularity], model: BaseModel) \
-        -> Tuple[float, Predicate]:
     consistency_lits = consistency(lits, rules, model)
+
+    for literal in literals_to_add:
+        consistency_added = consistency(lits.add(literal), rules, model)
+        delta_consistency = consistency_added - consistency_lits
+
+        max_delta_consistency = max(delta_consistency, max_delta_consistency)
+
+        if consistency_added > max_consistency_added:
+            argmax = literal
+            max_consistency_added = consistency_added
+    print(consistency(lits.add(argmax), rules, model), consistency(lits, rules, model))
+    print(max_delta_consistency, argmax)
+
+    return max_delta_consistency, argmax
+
+
+def __delta_argmax_add_spec(lits: Object,
+                            rules: List[Regularity],
+                            model: BaseModel) -> Tuple[float, Predicate]:
+
+    literals_to_add = set(
+        rule.conclusion for rule in rules if lits.rule_applicability(rule) and rule.conclusion not in lits
+    )
     argmax = UndefinedPredicate()
-    consistencymax_delta, consistencymax_arg, kr = .0, .0, .0
-    for lit in lits:
-        kr = consistency(lits.delete(lit), rules, model) - consistency_lits
-        if kr > consistencymax_delta:
-            consistencymax_delta = kr
-        if kr + consistency_lits > consistencymax_arg:
-            consistencymax_arg = kr + consistency_lits
-            argmax = lit
-    return consistencymax_delta, argmax
+    # max_delta_consistency = .0
+    max_consistency_added = .0
+
+    for literal in literals_to_add:
+        consistency_added = consistency_add(lits.add(literal), literal, rules, model)
+
+        if consistency_added > max_consistency_added:
+            argmax = literal
+    max_delta_consistency = consistency_add(lits.add(argmax), argmax, rules, model) - consistency(lits, argmax, rules, model)
+
+    return max_delta_consistency, argmax
+
+
+def __delta_argmax_del(lits: Object,
+                       rules: List[Regularity],
+                       model: BaseModel) -> Tuple[float, Predicate]:
+
+    argmax = UndefinedPredicate()
+    max_delta_consistency = .0
+    max_consistency_deleted = .0
+
+    consistency_lits = consistency(lits, rules, model)
+
+    for literal in lits:
+        consistency_deleted = consistency(lits.delete(literal), rules, model)
+        delta_consistency = consistency_deleted - consistency_lits
+
+        max_delta_consistency = max(delta_consistency, max_delta_consistency)
+
+        if consistency_deleted > max_consistency_deleted:
+            argmax = literal
+            max_consistency_deleted = consistency_deleted
+
+    return max_delta_consistency, argmax
 
 
 def log_prob(r: Regularity, model: BaseModel) -> float:
     return -mlog(1 - r.eval_prob(model))
 
+
+def load_yml_fix_points(path: str = None, stream=None) -> List[Object]:
+    if path is not None:
+        with open(path, 'r') as f:
+            return [Object.from_dict(obj) for obj in yaml.load(f, Loader=yaml.FullLoader)]
+    elif stream is not None:
+        return [Object.from_dict(obj) for obj in yaml.load(stream, Loader=yaml.FullLoader)]
+    else:
+        raise ValueError('you must pass `path` or `stream`')

@@ -14,13 +14,13 @@ from .alg.generator import build_spcr
 
 # fix-points
 from .alg.structure import Object, FixPoint
-from .alg.fixpoint import fp
+from .alg.fixpoint import fix_points
 
 # lang
 from .lang.opers import Var
 from .lang.predicate import Predicate
 from .lang.regularity import Regularity
-from .lang.parser import decstr, cstr
+from .lang.parser import decstr, cstr, decstr_folder
 
 # utils
 from .utils.cluster import altair
