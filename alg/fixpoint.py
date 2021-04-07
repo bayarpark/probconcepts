@@ -182,15 +182,16 @@ def __delta_argmax_add_spec(lits: Object,
         rule.conclusion for rule in rules if lits.rule_applicability(rule) and rule.conclusion not in lits
     )
     argmax = UndefinedPredicate()
-    # max_delta_consistency = .0
+    max_delta_consistency = .0
     max_consistency_added = .0
 
     for literal in literals_to_add:
         consistency_added = consistency_add(lits.add(literal), literal, rules, model)
-
-        if consistency_added > max_consistency_added:
+        consistency_lits = consistency_add(lits, literal, rules, model)
+        delta_consistency = consistency_added - consistency_lits
+        if delta_consistency > max_delta_consistency:
+            max_delta_consistency = delta_consistency
             argmax = literal
-    max_delta_consistency = consistency_add(lits.add(argmax), argmax, rules, model) - consistency(lits, argmax, rules, model)
 
     return max_delta_consistency, argmax
 

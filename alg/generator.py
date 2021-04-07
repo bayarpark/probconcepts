@@ -27,39 +27,53 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
                 build_premise(Regularity(lit), poss_lits, 0, f)
 
     # Наращивание посылки
-    def build_premise(rule: Regularity, possible_lits: PredicateTable, depth: int, file) -> bool:
+    def build_premise(rule: Regularity, iterlits: PredicateTable, depth: int, file) -> bool:
         if depth < model.fully_depth:
-            enhance = False
-            for lit in possible_lits:
-                new_rule = rule.enhance(lit)
-                if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
-                        check_threshold(new_rule, rule, lit, model) and \
-                        new_rule.eval_pvalue(model) < model.confidence_level and check_proba(new_rule, model) and \
-                        rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and check_fisher(new_rule, model):
-                    if depth == model.fully_depth - 1:
-                        print(cstr(new_rule), file=file)
-                        enhance = True
-                    else:
-                        enhance = build_premise(new_rule, possible_lits.drop(lit), depth + 1, file) or enhance
-
-                elif depth < model.base_depth:
-                    enhance = build_premise(new_rule, possible_lits.drop(lit), depth + 1, file) or enhance
+            enhance = any(list(map(lambda lit: __do_enhance(lit, rule, iterlits, depth, file), iterlits)))
 
             if not enhance:
-                if depth == 0:
-                    return True
-                elif depth <= model.base_depth:
-                    if rule.eval_pvalue(model) < model.confidence_level and \
-                            check_proba(rule, model) and check_fisher(rule, model):
-                        print(cstr(rule), file=file)
-                        return True
-                    else:
-                        return False
-                else:
-                    print(cstr(rule), file=file)
-                    return True
+                return __do_check_base(rule, depth, file)
             else:
                 return True
+        else:
+            return False
+
+    def __do_check_base(rule: Regularity, depth: int, file) -> bool:
+        if depth == 0:
+            return True
+        elif depth <= model.base_depth:
+            if rule.eval_pvalue(model) < model.confidence_level and \
+                    check_proba(rule, model) and check_fisher(rule, model):
+                print(cstr(rule), file=file)
+                return True
+            else:
+                return False
+        else:
+            print(cstr(rule), file=file)
+            return True
+
+    def __do_enhance(lit: Predicate,
+                     rule: Regularity,
+                     iterlits: PredicateTable,
+                     depth: int,
+                     file) -> bool:
+
+        new_rule = rule.enhance(lit)
+        if new_rule.is_nonnegative() and rule.eval_prob(model) < new_rule.eval_prob(model) and \
+                check_threshold(new_rule, rule, lit, model) and \
+                new_rule.eval_pvalue(model) < model.confidence_level and \
+                rule.eval_pvalue(model) > new_rule.eval_pvalue(model) and \
+                check_proba(new_rule, model) and \
+                check_fisher(new_rule, model):
+
+            if depth == model.fully_depth - 1:
+                print(cstr(new_rule), file=file)
+                return True
+            else:
+                return build_premise(new_rule, iterlits.drop(lit), depth + 1, file)
+
+        elif depth < model.base_depth:
+            return build_premise(new_rule, iterlits.drop(lit), depth + 1, file)
         else:
             return False
 
