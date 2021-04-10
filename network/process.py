@@ -38,6 +38,7 @@ def find_extrules(dir, model, ctype_dict):
     all_rules = []
     for file in glob.glob(dir+"*.txt"):
         all_rules.extend(decstr(file, ctype_dict))
+    print("Total rules:", len(all_rules))
 
     # searching for rules with the same premise
     dict_rules = dict()
@@ -47,6 +48,7 @@ def find_extrules(dir, model, ctype_dict):
             dict_rules[rule_hash] = [rule]
         else:
             dict_rules[rule_hash].append(rule)
+    print("Total unique premises:", len(dict_rules))
 
     extrules = []
     for key in dict_rules.keys():
@@ -59,48 +61,8 @@ def find_extrules(dir, model, ctype_dict):
                 concls.append(rule.conclusion)
 
         extrule = ExtRegularity(conclusion=concls, premise=base_rule.premise)
-       # extrule.evaluate(model)
+        # extrule.evaluate(model)
         # TODO checking for threshold
         extrules.append(extrule)
-
+    print("Total extrules:", len(extrules))
     return extrules
-
-"""
-def dense_layer(dir):
-    # reading
-
-    extrules = find_extrules
-
-    conjunctions = []
-    for extrule in extrules:
-        conjunctions.appen(extrule.to_conjunction())
-"""
-
-"""
-def find_all_extrules(dir, pt):
-    all_rules = []
-    for i in range(len(pt)):
-        for j in range(len(pt[i])):
-            for k in range(2):
-                with open(str(pt.table[i][j][k])+".txt", 'r') as f:
-                    for line in f:
-                        all_rules.append(find_extrules(read_rule(line), i, j, k) )
-
-
-def find_extrules(rule, i, j, k):
-"""
-
-
-"""
-def find_assoc_rules(pt):
-
-    pass
-
-
-def ass_rules_to_conj(ass_rules):
-    return List[Conjunctions]
-
-def conj_to_sample(conjunctions):
-    # строит по конъюнкициям выборку
-    pass
-"""

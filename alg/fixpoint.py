@@ -52,6 +52,10 @@ def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Ob
         return lits.add(lit_add)
     else:
         delta_add, lit_add = __delta_argmax_add(lits, rules, model)
+        print('---------#########---------')
+        print(delta_add, lit_add)
+        print(delta_del, lit_del)
+        print('---------#########---------')
         if consistency_lits < consistency(lits.add(lit_add), rules, model) and \
                 delta_add > delta_del and delta_add > 0:
             return lits.add(lit_add)
@@ -64,21 +68,20 @@ def step_operator(lits: Object, rules: List[Regularity], model: BaseModel) -> Ob
             return copy(lits)
 
 
-def fp(lits: List[Object], rules: List[Regularity], model: BaseModel, writename) -> List[Object]:
-    with open(writename, 'w') as f:
-        fix_points = []
+def fp(lits: List[Object], rules: List[Regularity], model: BaseModel) -> List[Object]:
+    fix_points = []
 
-        for lit_now in lits:
-            lit_now.completion(model.sample.pt)
+    for lit_now in lits:
+        lit_now.completion(model.sample.pt)
 
-            while True:
-                lit_next = step_operator(lit_now, rules, model)
-                if lit_now == lit_next:
-                    break
-                lit_now = lit_next
+        while True:
+            lit_next = step_operator(lit_now, rules, model)
+            if lit_now == lit_next:
+                break
+            lit_now = lit_next
 
-            lit_now.decompletion()
-            fix_points.append(lit_now)
+        lit_now.decompletion()
+        fix_points.append(lit_now)
 
     return fix_points
 
