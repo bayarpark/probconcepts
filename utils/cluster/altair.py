@@ -163,7 +163,7 @@ build_spcr(conclusions_to_calc, model)
 def ___make_scripts_for_ideal(md_params, data, bucket, workspace):
     script = f"""from probconcepts.alg.data import Sample, read_cd
 from probconcepts.alg.model import BaseModel
-from probconcepts.alg.fixpoint import fp
+from probconcepts.alg.fixpoint import fix_points
 from probconcepts.lang.parser import decstr
 from probconcepts.alg.structure import Object
 import pandas as pd
@@ -240,7 +240,7 @@ buckets = [range(0, 47),
  range(2726, 2773)]
 lits = [Object(df.iloc[i, :], sample.pt) for i in buckets[{bucket-1}]]
 writename = '{workspace}' + 'ideal_{bucket}.json'
-fp(lits, rules, model, writename)
+fix_points(lits, rules, model, writename)
     """
     return script
 

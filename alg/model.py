@@ -45,8 +45,8 @@ class BaseModel:
         if negative_threshold is None:
             self.negative_threshold = 0
         else:
-            if not (isinstance(negative_threshold, float) and 0 <= confidence_level < 1):
-                raise ValueError('negative_threshold must be float and in interval [0; 1) ')
+            if not (isinstance(negative_threshold, float) and 0 <= confidence_level <= 1):
+                raise ValueError('negative_threshold must be float and in interval [0; 1] ')
             else:
                 self.negative_threshold = negative_threshold
 

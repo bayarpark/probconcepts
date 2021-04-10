@@ -1,4 +1,6 @@
 from typing import List, Dict
+from tqdm import tqdm
+import glob
 
 from .opers import Var
 from .predicate import Predicate
@@ -16,6 +18,24 @@ def cstr(rule: Regularity) -> str:
     rule_str += str(rule.conclusion.operation)[1:]
     rule_str += " {} {}".format(str(rule.prob), str(rule.pvalue))
     return rule_str
+
+
+def decstr_folder(path_to_folder: str,
+                  cd: 'ColumnsDescription' = None,
+                  ctype_dict: Dict[int, str] = None,
+                  min_prob: float = None,
+                  max_pvalue: float = None) -> List[Regularity]:
+
+    if ctype_dict is None:
+        ctype_dict = {cd.features[feature_num]: feature_type for feature_num, feature_type in cd.type_dict.items()}
+
+    if not path_to_folder.endswith('/') or not path_to_folder.endswith('\\'):
+        path_to_folder = path_to_folder + '/'
+
+    rules = []
+    for file in tqdm(glob.glob(path_to_folder + '*.txt')):
+        rules.extend(decstr(file, ctype_dict, min_prob, max_pvalue))
+    return rules
 
 
 def decstr(filename: str,

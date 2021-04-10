@@ -14,7 +14,10 @@ class Object:
     pt: PredicateTable = None
 
     # TODO add transform mode
-    def __init__(self, data: Union[pd.Series, Dict], pt: PredicateTable = None) -> None:
+    def __init__(self, data: Union[pd.Series, Dict],
+                 pt: PredicateTable = None,
+                 identifier: Union[str, int] = None) -> None:
+        self.id = identifier
         if pt is None and type(data) is dict:
             self.table = data
         else:
@@ -109,14 +112,12 @@ class Object:
         self.table[p.ident].remove(p)
 
     @staticmethod
-    def from_dict(new_dict: Dict[str, Set[Predicate]]) -> 'Object':
-        return Object(data={k: set(map(lambda x: Predicate.from_dict(x), v)) for k, v in new_dict.items()})
+    def from_dict(new_dict: Dict) -> 'Object':
+        return Object(data={k: set(map(lambda x: Predicate.from_dict(x), v)) for k, v in new_dict['data'].items()},
+                      identifier=new_dict['id'])
 
     def to_dict(self) -> Dict:
-        if isinstance(self.table, dict):
-            return {k: list(map(lambda x: x.to_dict(), v)) for k, v in self.table.items()}
-        else:  # if pd.Series
-            return self.table.to_dict()
+        return {'data': {k: list(map(lambda x: x.to_dict(), v)) for k, v in self.table.items()}, 'id': self.id}
 
     def __inverse_transform__(self, pe) -> 'Object':
         return Object(data={k: set(map(pe.inverse_transform, v)) for k, v in self.table.items()})
@@ -125,7 +126,6 @@ class Object:
         return self.table == other.table
 
     def __len__(self) -> int:
-        # возвращает число предикатов в объекте
         return sum(map(len, self.table.values()))
 
     def __str__(self) -> str:
@@ -152,8 +152,8 @@ class Object:
 
 class FixPoint(Object):
 
-    def __init__(self, data) -> None:
-        super(FixPoint, self).__init__(data)
+    def __init__(self, data, pt, ident) -> None:
+        super(FixPoint, self).__init__(data, pt, ident)
         self.process = []
 
     def step_add(self, p: Predicate, rules: List[Regularity]) -> 'FixPoint':
