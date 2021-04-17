@@ -105,5 +105,5 @@ class Regularity:
     @pvalue.setter
     def pvalue(self, value: float):
         if not (0 <= value <= 1):
-            raise ValueError('Incorrect  p-value')
-        self.__prob = value
+            raise ValueError('Incorrect p-value')
+        self.__pvalue = value

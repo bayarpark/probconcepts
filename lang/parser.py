@@ -50,8 +50,7 @@ def decstr(filename: str,
             i, concl = read_concl(i, line, ctype_dict)
             prob, pvalue = read_probs(i, line, len(line))
 
-            rule = Regularity(concl)
-            rule.premise = premise
+            rule = Regularity(conclusion=concl, premise=premise)
 
             if (min_prob is not None and prob < min_prob) or (max_pvalue is not None and pvalue > max_pvalue):
                 continue
