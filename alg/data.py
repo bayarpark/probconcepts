@@ -29,8 +29,6 @@ class ColumnsDescription:
     type_dict: Dict[Union[str, int], Var] = None
 
 
-
-
 def create_cd(df: pd.DataFrame,
               label: Union[str, int] = None,
               cat_features: Iterable[Union[int, str]] = None,
@@ -268,7 +266,7 @@ class PredicateEncoder:
                 tmp_op = copy(obj.operation)
                 tmp_op.params = self.encoding['cat_features'][self.cd.features[obj.name]][obj.operation.params]
                 transformed_pr = Predicate(
-                    ident=self.cd.features[obj.name],
+                    name=self.cd.features[obj.name],
                     vtype=obj.vtype,
                     operation=tmp_op)
 
@@ -276,19 +274,19 @@ class PredicateEncoder:
                 tmp_op = copy(obj.operation)
                 tmp_op.params = self.encoding['bool_features'][self.cd.features[obj.name]][obj.operation.params]
                 transformed_pr = Predicate(
-                    ident=self.cd.features[obj.name],
+                    name=self.cd.features[obj.name],
                     vtype=obj.vtype,
                     operation=tmp_op)
 
             elif Var.isint(obj.vtype):
                 transformed_pr = Predicate(
-                    ident=self.cd.features[obj.name],
+                    name=self.cd.features[obj.name],
                     vtype=obj.vtype,
                     operation=obj.operation)
 
             elif Var.isreal(obj.vtype):
                 transformed_pr = Predicate(
-                    ident=self.cd.features[obj.name],
+                    name=self.cd.features[obj.name],
                     vtype=obj.vtype,
                     operation=obj.operation)
             else:
@@ -323,7 +321,7 @@ class PredicateEncoder:
                 tmp_op = copy(obj.operation)
                 tmp_op.params = self.inv_encoding['cat_features'][obj.name][obj.operation.params]
                 transformed_pr = Predicate(
-                    ident=inv_cd_features[obj.name],
+                    name=inv_cd_features[obj.name],
                     vtype=obj.vtype,
                     operation=tmp_op)
 
@@ -331,19 +329,19 @@ class PredicateEncoder:
                 tmp_op = copy(obj.operation)
                 tmp_op.params = self.inv_encoding['bool_features'][obj.name][obj.operation.params]
                 transformed_pr = Predicate(
-                    ident=inv_cd_features[obj.name],
+                    name=inv_cd_features[obj.name],
                     vtype=obj.vtype,
                     operation=tmp_op)
 
             elif Var.isint(obj.vtype):
                 transformed_pr = Predicate(
-                    ident=inv_cd_features[obj.name],
+                    name=inv_cd_features[obj.name],
                     vtype=obj.vtype,
                     operation=obj.operation)
 
             elif Var.isreal(obj.vtype):
                 transformed_pr = Predicate(
-                    ident=inv_cd_features[obj.name],
+                    name=inv_cd_features[obj.name],
                     vtype=obj.vtype,
                     operation=obj.operation)
             else:
@@ -399,10 +397,10 @@ class PredicateTable:
         new_pe.table = self.table
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
-        for k in range(len(lp := new_pe.table[p.ident])):
+        for k in range(len(lp := new_pe.table[p.name])):
             if p == lp[k][0] or p == lp[k][1]:
-                new_pe.used_predicate[p.ident][k][0] = False
-                new_pe.used_predicate[p.ident][k][1] = False
+                new_pe.used_predicate[p.name][k][0] = False
+                new_pe.used_predicate[p.name][k][1] = False
 
         return new_pe
 
@@ -418,17 +416,17 @@ class PredicateTable:
         new_pe.used_predicate = deepcopy(self.used_predicate)
 
         new_pe.used_predicate = PredicateTable.__do_lex_drop(new_pe.used_predicate, p)
-        for k in range(len(upr := new_pe.used_predicate[p.ident])):
+        for k in range(len(upr := new_pe.used_predicate[p.name])):
             upr[k][0] = False
             upr[k][1] = False
-            if new_pe.table[p.ident][k][1] == p or new_pe.table[p.ident][k][0] == p:
+            if new_pe.table[p.name][k][1] == p or new_pe.table[p.name][k][0] == p:
                 break
 
         return new_pe
 
     @staticmethod
     def __do_lex_drop(used_predicate: Dict[int, List[List[bool]]], p: Predicate) -> Dict:
-        for k in range(p.ident):
+        for k in range(p.name):
             used_predicate[k] = list(map(lambda _: [False, False], used_predicate[k]))
         return used_predicate
 
@@ -454,8 +452,8 @@ class PredicateTable:
             for feature_num, feature_vals in cat.items():
                 self.table[feature_num] = [
                     (
-                        Predicate(ident=feature_num, vtype=Var.Cat, operation=Eq(val)),
-                        Predicate(ident=feature_num, vtype=Var.Cat, operation=Neq(val))
+                        Predicate(name=feature_num, vtype=Var.Cat, operation=Eq(val)),
+                        Predicate(name=feature_num, vtype=Var.Cat, operation=Neq(val))
                     )
                     for val in feature_vals.values()
                 ]
@@ -464,8 +462,8 @@ class PredicateTable:
             for (feature_num, feature_vals) in boolf.items():
                 self.table[feature_num] = [
                     (
-                        Predicate(ident=feature_num, vtype=Var.Bool, operation=Eq(True)),
-                        Predicate(ident=feature_num, vtype=Var.Bool, operation=Eq(False))
+                        Predicate(name=feature_num, vtype=Var.Bool, operation=Eq(True)),
+                        Predicate(name=feature_num, vtype=Var.Bool, operation=Eq(False))
                     )
                 ]
 
@@ -536,8 +534,7 @@ class Sample:
         self.pt = PredicateTable(self.pe, data)
         self.pt.fit()
         self.shape = data.shape
-        self.data = self.pe.transform(data)
-        self.data = self.data.values.tolist()
+        self.data = self.pe.transform(data).values.tolist()
 
         replace_missing_values(self.data, self.shape)
 

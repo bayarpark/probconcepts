@@ -75,7 +75,7 @@ def step_operator(lits: Object,
                 print(f'ALTERNATIVE: {lit_del} wit DELTA: {delta_del}')
 
             return lits.add(lit_add)
-        elif delta_del > 0 and consistency_lits < consistency(lits.delete(lit_del), rules, model):
+        elif delta_del > 0 and lit_del in lits and consistency_lits < consistency(lits.delete(lit_del), rules, model):
 
             if logging:
                 print(' # ---- STEP COMPLETED ---- # ')
@@ -116,7 +116,9 @@ def __find_fix_points_and_return(lits: List[Object],
     for lit_now in lits:
         lit_now.completion(model.sample.pt)
 
-        print('# ==== STARTING IDEALIZING A NEW OBJECT ==== #')
+        if logging:
+            print('# ==== STARTING IDEALIZING A NEW OBJECT ==== #')
+
         while True:
             lit_next = step_operator(lit_now, rules, model, alternative_choose, logging)
             if lit_now == lit_next:
@@ -168,8 +170,8 @@ def __delta_argmax_add(lits: Object,
         if consistency_added > max_consistency_added:
             argmax = literal
             max_consistency_added = consistency_added
-    print(consistency(lits.add(argmax), rules, model), consistency(lits, rules, model))
-    print(max_delta_consistency, argmax)
+    #print(consistency(lits.add(argmax), rules, model), consistency(lits, rules, model))
+    #print(max_delta_consistency, argmax)
 
     return max_delta_consistency, argmax
 

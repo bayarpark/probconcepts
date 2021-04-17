@@ -15,13 +15,13 @@ def std_measure(rule, model) -> Tuple[Proba, PValue]:
         d, n = 1, 1
         val_is_unknown = False
         for lit in rule.premise:
-            p = obj[lit.ident]
+            p = obj[lit.name]
             if p is None:
                 val_is_unknown = True
                 break
             if d != 0 and not lit(p):
                 d = 0
-        p = obj[rule.conclusion.ident]
+        p = obj[rule.conclusion.name]
         if val_is_unknown or p is None:
             d, n = 0, 0
         else:

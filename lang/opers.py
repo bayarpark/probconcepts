@@ -31,7 +31,7 @@ class Var(Enum):
 
 
 ORDERED_VAR = [Var.Int, Var.Float]
-ALLOWED_PYTHON_TYPES = Union[bool, int, float]
+ALLOWED_PYTHON_TYPES = Union[bool, int, float, str]
 
 
 class Opers(Enum):

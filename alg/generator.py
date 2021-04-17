@@ -4,11 +4,6 @@ from ..utils.fisher import fisher_exact
 from ..utils.sys import makedir
 
 
-# Правила строятся следующим образом (используется обход графа "в глубину"):
-# Последовательно фиксируются заключения, далее, для каждого заключения
-# запускается функция build_premise, которая
-
-
 def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
     """
 

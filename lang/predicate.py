@@ -4,18 +4,18 @@ from .opers import *
 class Predicate:
 
     def __init__(self,
-                 ident: Union[int, str],
+                 name: Union[int, str],
                  vtype: Var,
                  operation: Oper = None,
                  opt: Union[Opers, str] = None,
-                 params: Union[int, bool, float, Tuple[float, float], Tuple[int, int]] = None) -> None:
-        self.ident = ident
-        self.vtype = vtype
+                 params: Union[int, bool, float, Any] = None) -> None:
+        self.__name = name
+        self.__vtype = vtype
 
         if operation is not None:
-            self.operation = operation
+            self.__operation = operation
         elif opt is not None and params is not None:
-            self.operation = Oper.make(opt, params)
+            self.__operation = Oper.make(opt, params)
         else:
             raise ValueError("`operation` or (`opt` and `params`) must be defined")
 
@@ -24,58 +24,66 @@ class Predicate:
         checks the satisfiability of a predicate on an object
         (list, tuple or other object representation)
         """
-        return self.operation(x[self.ident])
+        return self.__operation(x[self.__name])
 
     def __call__(self, x: Union[int, bool, float]) -> bool:
         """
         checks the satisfiability of a predicate on value (int, bool or float)
         """
-        return self.operation(x)
+        return self.__operation(x)
 
     def __invert__(self) -> 'Predicate':
-        return Predicate(self.ident, self.vtype, ~self.operation)  # TODO 
+        return Predicate(self.__name, self.__vtype, ~self.__operation)  # TODO 
 
     def __str__(self) -> str:
-        return f"<#{self.ident}{str(self.operation)}>"
+        return f"<#{self.__name}{str(self.__operation)}>"
 
     def __eq__(self, other: 'Predicate') -> bool:
-        return self.ident == other.ident and self.operation == other.operation and self.vtype == other.vtype
+        return self.__name == other.name and self.__operation == other.operation and self.__vtype == other.vtype
         # Есть проблемы с сравнением бинарных равенств, т.е. если признак принимает только {A, B}
         # то в нашем случае Eq(A) := x == A НЕ РАВНО Neq(B) := x != B
         # (а по-хорошему должно было бы, т.к. это одно и то же)
 
     def __hash__(self) -> int:
-        return hash((self.ident, self.vtype, self.operation))
+        return hash((self.__name, self.__vtype, self.__operation))
 
     def __len__(self) -> int:
         return 1
 
-    @property
-    def name(self) -> Union[int, str]:
-        return self.ident
-
     def is_positive(self) -> bool:
-        if self.vtype == Var.Bool and isinstance(self.operation, Eq):
+        if self.__vtype == Var.Bool and isinstance(self.__operation, Eq):
             return True
         else:
-            return self.operation.is_positive()
+            return self.__operation.is_positive()
 
     def to_dict(self) -> Dict:
         return {
-            "id": self.ident,
-            "var": self.vtype.name,
-            "op": self.operation.to_dict(),
+            "nm": self.__name,
+            "var": self.__vtype.name,
+            "op": self.__operation.to_dict(),
         }
 
     @staticmethod
-    def from_dict(d: Dict[str, Union[int, str, Dict]]) -> 'Predicate':
+    def from_dict(d: Dict) -> 'Predicate':
         return Predicate(
-            ident=d['id'],
+            name=d['nm'],
             vtype=Var[d['var']],
             operation=Oper.from_dict(d['op'])
         )
 
+    @property
+    def name(self) -> Union[int, str]:
+        return self.__name
+
+    @property
+    def operation(self) -> Oper:
+        return self.__operation
+
+    @property
+    def vtype(self) -> Var:
+        return self.__vtype
+
 
 class UndefinedPredicate(Predicate):
     def __init__(self) -> None:
-        super().__init__(0, vtype=Var.undefined, operation=UndefinedOperation())
+        super().__init__('undefined', vtype=Var.undefined, operation=UndefinedOperation())

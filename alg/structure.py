@@ -81,35 +81,35 @@ class Object:
         # проверяет, применимо ли правило к объекту, т.е.   #TODO add transform mode
         # reg.premise подмножество self
         for pr in reg.premise:
-            if (pr_set := self.table.get(pr.ident)) is not None and pr not in pr_set:
+            if (pr_set := self.table.get(pr.name)) is not None and pr not in pr_set:
                 return False
         return True
 
     def add(self, p: Predicate) -> 'Object':
         # добавляет предикат в объект и возвращает копию    #TODO need deepcopy?
         new_obj = Object(deepcopy(self.table))
-        if (new_pr_set := new_obj.table.get(p.ident)) is not None:
+        if (new_pr_set := new_obj.table.get(p.name)) is not None:
             new_pr_set.add(p)
         else:
-            new_obj.table[p.ident] = {p}
+            new_obj.table[p.name] = {p}
 
         return new_obj
 
     def delete(self, p: Predicate) -> 'Object':
         # удаляет предикат из объекта
         # first check is table contains predicate       #TODO add error
-        if p not in self.table[p.ident]:
+        if p not in self.table[p.name]:
             raise ValueError("Attempt to delete a nonexistent predicate")
 
         new_obj = Object(deepcopy(self.table))
-        new_obj.table[p.ident].remove(p)
+        new_obj.table[p.name].remove(p)
         return new_obj
 
     def update(self, p: Predicate) -> None:
-        self.table[p.ident].add(p)
+        self.table[p.name].add(p)
 
     def remove(self, p: Predicate) -> None:
-        self.table[p.ident].remove(p)
+        self.table[p.name].remove(p)
 
     @staticmethod
     def from_dict(new_dict: Dict) -> 'Object':
@@ -139,7 +139,7 @@ class Object:
 
     def __contains__(self, pr: Predicate) -> bool:
         # проверяет, содержит ли объект предикат item
-        return pr in self.table.get(pr.ident, [])
+        return pr in self.table.get(pr.name, [])
 
     def __copy__(self) -> 'Object':
         new_obj = Object(copy(self.table))
@@ -151,23 +151,5 @@ class Object:
 
 
 class FixPoint(Object):
-
-    def __init__(self, data, pt, ident) -> None:
-        super(FixPoint, self).__init__(data, pt, ident)
-        self.process = []
-
-    def step_add(self, p: Predicate, rules: List[Regularity]) -> 'FixPoint':
-        self_copy = self.add(p)
-        self_copy.process.append((p, rules))
-        return self_copy
-
-    def step_del(self, p: Predicate, rules: List[Regularity]) -> 'FixPoint':
-        self_copy = self.delete(p)
-        self_copy.process.append((p, rules))
-        return self_copy
-
-    def __copy__(self) -> 'FixPoint':
-        fp_copy = FixPoint(copy(self.table))
-        fp_copy.process = self.process[:]
-        return fp_copy
+    ...
 

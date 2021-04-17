@@ -1,54 +1,39 @@
 from .data import *
 from ..utils.measure import std_measure
 
-PValue = NewType('PValue', float)
-Proba = NewType('Proba', float)
-
 
 class BaseModel:
     def __init__(self,
                  sample: Sample = None,
-                 base_depth: int = None,
-                 fully_depth: int = None,
-                 confidence_level: float = None,
-                 negative_threshold: float = None,
-                 measure: Union[Callable[[Regularity, 'BaseModel'], Tuple[Proba, PValue]], str] = 'std',
+                 base_depth: int = 2,
+                 fully_depth: int = 100,
+                 confidence_level: float = 0.05,
+                 negative_threshold: float = 0.,
+                 measure: Union[Callable[[Regularity, 'BaseModel'], Tuple[float, float]], str] = 'std',
                  rules_write_path: str = 'pcr/') -> None:
         
         self.path = rules_write_path
         self.sample = sample
 
-        if fully_depth is None:
-            self.fully_depth = 2**64
+        if fully_depth < 1:
+            raise ValueError('fully_depth must be int and >= 1')
         else:
-            if not (isinstance(fully_depth, int) and fully_depth >= 1):
-                raise ValueError('fully_depth must be int and >= 1')
-            else:
-                self.fully_depth = fully_depth
+            self.fully_depth = fully_depth
 
-        if base_depth is None:
-            self.base_depth = 2
+        if not (1 <= base_depth <= fully_depth):
+            raise ValueError('base_depth must be int and 1 <= base_depth <= fully_depth')
         else:
-            if not (isinstance(base_depth, int) and 1 <= base_depth <= fully_depth):
-                raise ValueError('base_depth must be int and 1 <= base_depth <= fully_depth')
-            else:
-                self.base_depth = base_depth
+            self.base_depth = base_depth
 
-        if confidence_level is None:
-            self.confidence_level = 0.05
+        if not (0 <= confidence_level <= 1):
+            raise ValueError('confidence_level must be float and in interval [0, 1]')
         else:
-            if not (isinstance(confidence_level, float) and 0 <= confidence_level <= 1):
-                raise ValueError('confidence_level must be float and in interval [0, 1]')
-            else:
-                self.confidence_level = confidence_level
+            self.confidence_level = confidence_level
 
-        if negative_threshold is None:
-            self.negative_threshold = 0
+        if not (0 <= confidence_level <= 1):
+            raise ValueError('negative_threshold must be float and in interval [0; 1] ')
         else:
-            if not (isinstance(negative_threshold, float) and 0 <= confidence_level <= 1):
-                raise ValueError('negative_threshold must be float and in interval [0; 1] ')
-            else:
-                self.negative_threshold = negative_threshold
+            self.negative_threshold = negative_threshold
 
         if measure == 'std':
             self.measure = std_measure

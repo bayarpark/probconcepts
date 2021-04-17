@@ -10,11 +10,11 @@ from .regularity import Regularity
 def cstr(rule: Regularity) -> str:
     rule_str = ""
     for pr in rule.premise:
-        rule_str += str(pr.ident) + ' '
+        rule_str += str(pr.name) + ' '
         rule_str += str(pr.operation)[1:] + '&'
 
     rule_str = rule_str[:-1] + '@'
-    rule_str += str(rule.conclusion.ident) + ' '
+    rule_str += str(rule.conclusion.name) + ' '
     rule_str += str(rule.conclusion.operation)[1:]
     rule_str += " {} {}".format(str(rule.prob), str(rule.pvalue))
     return rule_str
@@ -67,16 +67,16 @@ def read_premise(line, ctype_dict):
     i = 0
     premise = []
     while True:
-        ident = ""
+        name = ""
         opt = ""
         par = ""
 
-        # reading ident of predicate (int)
+        # reading name of predicate (int)
         while line[i] != ' ':
-            ident += line[i]
+            name += line[i]
             i += 1
         i += 1  # move pointer to operator
-        int_id = int(ident)
+        int_id = int(name)
 
         # reading operator of predicate (Opt)
         # =, !=, <, >, =>, <=, in
@@ -122,16 +122,16 @@ def cstr_to_predicate(int_id, str_var, opt, par):
 
 
 def read_concl(i, line, ctype_dict):
-    ident = ""
+    name = ""
     opt = ""
     par = ""
 
-    # reading ident of predicate (int)
+    # reading name of predicate (int)
     while line[i] != ' ':
-        ident += line[i]
+        name += line[i]
         i += 1
     i += 1  # move pointer to operator
-    int_id = int(ident)
+    int_id = int(name)
 
     # reading operator of predicate (Oper)
     # =, !=, <, >, =>, <=, in
