@@ -26,7 +26,7 @@ class Predicate:
         """
         return self.__operation(x[self.__name])
 
-    def __call__(self, x: Union[int, bool, float]) -> bool:
+    def __call__(self, x: Union[int, bool, float, str]) -> bool:
         """
         checks the satisfiability of a predicate on value (int, bool or float)
         """
