@@ -37,8 +37,10 @@ def build_spcr(conclusions: List[Predicate], model: BaseModel) -> None:
         if depth == 0:
             return True
         elif depth <= model.base_depth:
-            if rule.eval_pvalue(model) < model.confidence_level and \
-                    check_proba(rule, model) and check_fisher(rule, model):
+            if rule.is_nonnegative() and \
+                    rule.eval_pvalue(model) < model.confidence_level and \
+                    check_proba(rule, model) and \
+                    check_fisher(rule, model):
                 print(cstr(rule), file=file)
                 return True
             else:
@@ -126,6 +128,6 @@ def check_fisher(rule: Regularity, model: BaseModel) -> bool:
                     bottom += 1
 
         crosstab = [[top, bottom - top], [cons_count - top, all_sum - cons_count - bottom + top]]
-        if p_value := fisher_exact(crosstab) >= model.confidence_level:
+        if p_value := fisher_exact(crosstab) >= model.confidence_predicate:
             return False
     return True

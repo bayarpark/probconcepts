@@ -63,6 +63,9 @@ class Regularity:
         else:
             return self.__prob, self.__pvalue
 
+    def re_eval(self, model):
+        return model.measure(self, model)
+
     def to_dict(self) -> Dict:
         return {
             'premise': [p.to_dict() for p in self.__premise],

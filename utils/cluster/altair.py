@@ -255,4 +255,4 @@ if __name__ == "__main__":
     elif sys.argv[1] == '-json':
         make_from_json(sys.argv[2])
     else:
-        print('Unexpected mode. Maybe you mean\n-ideal \t or \n-full\n \t or\n-json?')
+        print('Unexpected mode. Maybe you mean\n-ideal\n \t or \n-full\n \t or\n-json?')

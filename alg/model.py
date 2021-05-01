@@ -8,10 +8,11 @@ class BaseModel:
                  base_depth: int = 2,
                  fully_depth: int = 100,
                  confidence_level: float = 0.05,
+                 confidence_predicate: float = 0.05,
                  negative_threshold: float = 0.,
                  measure: Union[Callable[[Regularity, 'BaseModel'], Tuple[float, float]], str] = 'std',
                  rules_write_path: str = 'pcr/') -> None:
-        
+
         self.path = rules_write_path
         self.sample = sample
 
@@ -25,9 +26,10 @@ class BaseModel:
         else:
             self.base_depth = base_depth
 
-        if not (0 <= confidence_level <= 1):
+        if not (0 <= confidence_level <= 1) or not (0 <= confidence_predicate <= 1):
             raise ValueError('confidence_level must be float and in interval [0, 1]')
         else:
+            self.confidence_predicate = confidence_predicate
             self.confidence_level = confidence_level
 
         if not (0 <= confidence_level <= 1):
