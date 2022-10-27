@@ -1,22 +1,19 @@
-# Probconcepts --- Поиск вероятностных закономерностей и прототипов на Python
+## Probconcepts — probabilistic formal concepts & prototypes (fix points) discovery
 
-## Функциональность
----
+## Capabilities
+- [x] Automatic predicate extraction for binary and categorical features
+- [x] Extraction of probabilistic causal relations (PCR) from data
+- [x] Extraction of strongest PCR (SPCR) and most specific causal relations (MSCR)
+- [x] Prototypes discovery based on MSCR
 
-- [+-] Автоматическое извлечение признаков и их вариаций из DataFrame
 
-- [x] Бинарных признаков
-  
-- [x] Категориальных признаков
+## Installation 
+```python
+!git clone https://github.com/bayarpark/probconcepts.git
+!pip install -r probconcepts/requirements.txt
+from probconcepts import *
+```
 
-- [ ] Вещественных признаков 
-  
-- [ ] Целочисленных признаков
-  
-- **Поиск в данных:**
-- [ ] вероятностных закономерностей (Probabilistic causal relations; PCR),
-- [x] сильнейших вероятностных закономерностей (Strongest PCR; SPCR)
-- **Нахождение прототипов на основе правил (кластеризация)**
-- **Возможность интерпретируемости:** 
-- [+-] извлечение наиболее сильных правил,
-- [+-] извлечение наиболее сильных признаков
+
+## Article
+[E. Vityaev, B. Pak, Prototypes of the “natural” concepts discovery, Cognitive Systems Research 67, 1-8](https://www.sciencedirect.com/science/article/abs/pii/S138904172030111X)
