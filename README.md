@@ -17,3 +17,17 @@ from probconcepts import *
 
 ## Article
 [E. Vityaev, B. Pak, Prototypes of the “natural” concepts discovery, Cognitive Systems Research 67, 1-8](https://www.sciencedirect.com/science/article/abs/pii/S138904172030111X)
+
+## Cite
+
+```bibtex
+@article{VITYAEV20211,
+      title = {Prototypes of the “natural” concepts discovery},
+      journal = {Cognitive Systems Research},
+      volume = {67},
+      pages = {1-8},
+      year = {2021},
+      issn = {1389-0417},
+      doi = {https://doi.org/10.1016/j.cogsys.2020.12.005},
+      author = {Evgenii Vityaev and Bayar Pak},
+```
