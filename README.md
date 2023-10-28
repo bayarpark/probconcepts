@@ -29,5 +29,6 @@ from probconcepts import *
       year = {2021},
       issn = {1389-0417},
       doi = {https://doi.org/10.1016/j.cogsys.2020.12.005},
-      author = {Evgenii Vityaev and Bayar Pak},
+      author = {Evgenii Vityaev and Bayar Pak}
+}
 ```
